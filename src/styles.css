@@ -129,9 +129,18 @@ input[type="file"] {
   background-color: #0056b3;
 }
 
-#qr-code {
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 10px;
-  background: #fff;
+.github-link {
+  margin-top: 20px;
+  text-align: center;
+  width: 100%;
+}
+
+.github-link a {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.github-link a:hover {
+  text-decoration: underline;
 }

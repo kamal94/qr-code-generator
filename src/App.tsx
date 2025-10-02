@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import QRCodeStyling from 'qr-code-styling';
+import html2canvas from 'html2canvas';
 import './styles.css';
 
 const App: React.FC = () => {
@@ -12,8 +13,11 @@ const App: React.FC = () => {
   const [centerImage, setCenterImage] = useState<string | null>(null);
   const [qrMargin, setQrMargin] = useState(10);
   const [downloadSize, setDownloadSize] = useState(1000);
+  const [backgroundBorderStyle, setBackgroundBorderStyle] = useState('square');
+  const [borderRadius, setBorderRadius] = useState(20);
 
   const qrCodeRef = useRef<HTMLDivElement>(null);
+  const qrCodeContainerRef = useRef<HTMLDivElement>(null);
   const qrCode = useRef<QRCodeStyling | null>(null);
 
   useEffect(() => {
@@ -21,7 +25,7 @@ const App: React.FC = () => {
       qrCode.current = new QRCodeStyling({
         width: 300,
         height: 300,
-        margin: qrMargin,
+        margin: 0,
         data: url,
         image: centerImage || '',
         dotsOptions: {
@@ -49,7 +53,7 @@ const App: React.FC = () => {
     if (qrCode.current) {
       qrCode.current.update({
         data: url,
-        margin: qrMargin,
+        margin: 0,
         dotsOptions: {
           color: dotColor,
           type: dotStyle,
@@ -69,7 +73,7 @@ const App: React.FC = () => {
         },
       });
     }
-  }, [url, bgColor, dotColor, dotStyle, cornerSquareStyle, centerImage, qrMargin, cornerDotStyle]);
+  }, [url, bgColor, dotColor, dotStyle, cornerSquareStyle, centerImage, cornerDotStyle]);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,9 +87,14 @@ const App: React.FC = () => {
   };
 
   const onDownloadClick = () => {
-    if (!qrCode.current) return;
+    const tempQrCode = new QRCodeStyling({
+      ...qrCode.current?._options,
+      width: downloadSize,
+      height: downloadSize,
+      margin: 0, // We handle the margin via padding on the canvas
+    });
 
-    qrCode.current.getRawData('png').then((rawData) => {
+    tempQrCode.getRawData('png').then((rawData) => {
       if (!rawData) return;
 
       const canvas = document.createElement('canvas');
@@ -94,16 +103,35 @@ const App: React.FC = () => {
 
       const img = new Image();
       img.onload = () => {
-        const totalSize = downloadSize;
+        const borderWidth = (qrMargin / 300) * downloadSize; // Scale border width proportionally
+        const totalSize = downloadSize + borderWidth * 2;
         canvas.width = totalSize;
         canvas.height = totalSize;
 
+        // Draw background color and border
         ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, totalSize, totalSize);
+        if (backgroundBorderStyle === 'rounded') {
+          const radius = (borderRadius / 300) * downloadSize; // Scale radius proportionally
+          ctx.beginPath();
+          ctx.moveTo(radius, 0);
+          ctx.lineTo(totalSize - radius, 0);
+          ctx.quadraticCurveTo(totalSize, 0, totalSize, radius);
+          ctx.lineTo(totalSize, totalSize - radius);
+          ctx.quadraticCurveTo(totalSize, totalSize, totalSize - radius, totalSize);
+          ctx.lineTo(radius, totalSize);
+          ctx.quadraticCurveTo(0, totalSize, 0, totalSize - radius);
+          ctx.lineTo(0, radius);
+          ctx.quadraticCurveTo(0, 0, radius, 0);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillRect(0, 0, totalSize, totalSize);
+        }
 
-        const qrCodeSize = totalSize - qrMargin * 2;
-        ctx.drawImage(img, qrMargin, qrMargin, qrCodeSize, qrCodeSize);
+        // Draw the QR code image onto the canvas
+        ctx.drawImage(img, borderWidth, borderWidth, downloadSize, downloadSize);
 
+        // Trigger download
         const link = document.createElement('a');
         link.download = 'qr-code.png';
         link.href = canvas.toDataURL('image/png');
@@ -184,6 +212,30 @@ const App: React.FC = () => {
           </select>
         </div>
         <div className="input-group">
+          <label htmlFor="background-border-style">Background Border Style</label>
+          <select
+            id="background-border-style"
+            value={backgroundBorderStyle}
+            onChange={(e) => setBackgroundBorderStyle(e.target.value)}
+          >
+            <option value="square">Square</option>
+            <option value="rounded">Rounded</option>
+          </select>
+        </div>
+        {backgroundBorderStyle === 'rounded' && (
+          <div className="input-group">
+            <label htmlFor="border-radius">Border Radius</label>
+            <input
+              type="range"
+              id="border-radius"
+              min="0"
+              max="50"
+              value={borderRadius}
+              onChange={(e) => setBorderRadius(parseInt(e.target.value, 10))}
+            />
+          </div>
+        )}
+        <div className="input-group">
           <label>Center Image</label>
           <div className="file-input-wrapper">
             <div className="file-input-button">Upload Image</div>
@@ -203,7 +255,17 @@ const App: React.FC = () => {
         </div>
       </div>
       <div className="qr-code-panel">
-        <div id="qr-code" ref={qrCodeRef}></div>
+        <div
+          ref={qrCodeContainerRef}
+          style={{
+            backgroundColor: bgColor,
+            padding: `${qrMargin}px`,
+            display: 'inline-block',
+            borderRadius: backgroundBorderStyle === 'rounded' ? `${borderRadius}px` : '0',
+          }}
+        >
+          <div ref={qrCodeRef}></div>
+        </div>
         <div className="input-group">
           <label htmlFor="download-size">Download Resolution</label>
           <select
@@ -219,6 +281,11 @@ const App: React.FC = () => {
         <button className="download-button" onClick={onDownloadClick}>
           Download PNG
         </button>
+        <div className="github-link">
+          <a href="https://github.com/kamal94/qr-code-generator" target="_blank" rel="noopener noreferrer">
+            View on GitHub
+          </a>
+        </div>
       </div>
     </div>
   );
