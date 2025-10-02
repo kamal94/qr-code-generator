@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [downloadSize, setDownloadSize] = useState(1000);
   const [backgroundBorderStyle, setBackgroundBorderStyle] = useState('rounded');
   const [borderRadius, setBorderRadius] = useState(20);
+  const [borderWidth, setBorderWidth] = useState(0);
 
   const qrCodeRef = useRef<HTMLDivElement>(null);
   const qrCodeContainerRef = useRef<HTMLDivElement>(null);
@@ -111,8 +112,8 @@ const App: React.FC = () => {
 
       const img = new Image();
       img.onload = () => {
-        const borderWidth = (qrMargin / 300) * downloadSize; // Scale border width proportionally
-        const totalSize = downloadSize + borderWidth * 2;
+        const padding = (qrMargin / 300) * downloadSize; // Scale padding proportionally
+        const totalSize = downloadSize + padding * 2;
         canvas.width = totalSize;
         canvas.height = totalSize;
 
@@ -136,8 +137,31 @@ const App: React.FC = () => {
           ctx.fillRect(0, 0, totalSize, totalSize);
         }
 
+        if (borderWidth > 0) {
+          const scaledBorderWidth = (borderWidth / 300) * downloadSize;
+          ctx.strokeStyle = dotColor;
+          ctx.lineWidth = scaledBorderWidth;
+          if (backgroundBorderStyle === 'rounded') {
+            const radius = (borderRadius / 300) * downloadSize;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(totalSize - radius, 0);
+            ctx.quadraticCurveTo(totalSize, 0, totalSize, radius);
+            ctx.lineTo(totalSize, totalSize - radius);
+            ctx.quadraticCurveTo(totalSize, totalSize, totalSize - radius, totalSize);
+            ctx.lineTo(radius, totalSize);
+            ctx.quadraticCurveTo(0, totalSize, 0, totalSize - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.stroke();
+          } else {
+            ctx.strokeRect(0, 0, totalSize, totalSize);
+          }
+        }
+
         // Draw the QR code image onto the canvas
-        ctx.drawImage(img, borderWidth, borderWidth, downloadSize, downloadSize);
+        ctx.drawImage(img, padding, padding, downloadSize, downloadSize);
 
         // Trigger download
         const link = document.createElement('a');
@@ -231,6 +255,19 @@ const App: React.FC = () => {
               <option value="rounded">Rounded</option>
             </select>
           </div>
+
+          <div className="input-group">
+            <label htmlFor="border-width">Border Line Thickness</label>
+            <input
+              type="range"
+              id="border-width"
+              min="0"
+              max="20"
+              value={borderWidth}
+              onChange={(e) => setBorderWidth(parseInt(e.target.value, 10))}
+            />
+          </div>
+
           {backgroundBorderStyle === 'rounded' && (
             <div className="input-group">
               <label htmlFor="border-radius">Border Radius</label>
@@ -245,7 +282,7 @@ const App: React.FC = () => {
             </div>
           )}
           <div className="input-group">
-            <label htmlFor="margin">Border Thickness</label>
+            <label htmlFor="margin">Border Padding</label>
             <input
               type="range"
               id="margin"
@@ -278,6 +315,7 @@ const App: React.FC = () => {
               padding: `${qrMargin}px`,
               display: 'inline-block',
               borderRadius: backgroundBorderStyle === 'rounded' ? `${borderRadius}px` : '0',
+              border: `${borderWidth}px solid ${dotColor}`,
             }}
           >
             <div ref={qrCodeRef}></div>
