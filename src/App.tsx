@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaGithub } from 'react-icons/fa';
 import QRCodeStyling from 'qr-code-styling';
+import { createQRCanvas, downloadCanvas } from './qrCanvas';
 import './styles.css';
 
 const App: React.FC = () => {
@@ -187,7 +188,7 @@ const App: React.FC = () => {
   });
 
 
-  const onDownloadClick = () => {
+  const onDownloadClick = async () => {
     const tempQrCode = new QRCodeStyling({
       ...qrCode.current?._options,
       width: downloadSize,
@@ -195,77 +196,25 @@ const App: React.FC = () => {
       margin: 0, // We handle the margin via padding on the canvas
     });
 
-    tempQrCode.getRawData('png').then((rawData) => {
-      if (!rawData) return;
+    const rawData = await tempQrCode.getRawData('png');
+    if (!rawData) return;
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+    try {
+      const canvas = await createQRCanvas({
+        qrImageBlob: rawData as Blob,
+        bgColor,
+        dotColor,
+        downloadSize,
+        qrMargin,
+        borderRadius,
+        borderWidth,
+        backgroundBorderStyle: backgroundBorderStyle as 'rounded' | 'square',
+      });
 
-      const img = new Image();
-      img.onload = () => {
-        const padding = (qrMargin / 300) * downloadSize; // Scale padding proportionally
-        console.log({padding, qrMargin, downloadSize})
-        const totalSize = downloadSize + padding * 2;
-        canvas.width = totalSize+300;
-        canvas.height = totalSize+300;
-
-        // Draw background color and border
-        ctx.fillStyle = bgColor;
-        if (backgroundBorderStyle === 'rounded') {
-          const radius = (borderRadius / 300) * downloadSize; // Scale radius proportionally
-          ctx.beginPath();
-          ctx.moveTo(radius, 0);
-          ctx.lineTo(totalSize - radius, 0);
-          ctx.quadraticCurveTo(totalSize, 0, totalSize, radius);
-          ctx.lineTo(totalSize, totalSize - radius);
-          ctx.quadraticCurveTo(totalSize, totalSize, totalSize - radius, totalSize);
-          ctx.lineTo(radius, totalSize);
-          ctx.quadraticCurveTo(0, totalSize, 0, totalSize - radius);
-          ctx.lineTo(0, radius);
-          ctx.quadraticCurveTo(0, 0, radius, 0);
-          ctx.closePath();
-          ctx.fill();
-        } else {
-          ctx.fillRect(0, 0, totalSize, totalSize);
-        }
-
-        if (borderWidth > 0) {
-          const scaledBorderWidth = (borderWidth / 300) * downloadSize;
-          ctx.strokeStyle = dotColor;
-          ctx.lineWidth = scaledBorderWidth;
-          if (backgroundBorderStyle === 'rounded') {
-            const radius = (borderRadius / 300) * downloadSize;
-            ctx.beginPath();
-            ctx.moveTo(radius, 0);
-            ctx.lineTo(totalSize - radius, 0);
-            ctx.quadraticCurveTo(totalSize, 0, totalSize, radius);
-            ctx.lineTo(totalSize, totalSize - radius);
-            ctx.quadraticCurveTo(totalSize, totalSize, totalSize - radius, totalSize);
-            ctx.lineTo(radius, totalSize);
-            ctx.quadraticCurveTo(0, totalSize, 0, totalSize - radius);
-            ctx.lineTo(0, radius);
-            ctx.quadraticCurveTo(0, 0, radius, 0);
-            ctx.closePath();
-            ctx.stroke();
-          } else {
-            ctx.strokeRect(0, 0, totalSize, totalSize);
-          }
-        }
-
-        // Draw the QR code image onto the canvas
-        ctx.drawImage(img, padding, padding, downloadSize, downloadSize);
-
-        // Trigger download
-        const link = document.createElement('a');
-        link.download = 'qr-code.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        URL.revokeObjectURL(img.src);
-      };
-      img.src = URL.createObjectURL(rawData as Blob);
-    });
+      downloadCanvas(canvas);
+    } catch (error) {
+      console.error('Failed to create QR code:', error);
+    }
   };
 
   return (
