@@ -30,17 +30,18 @@ export interface CanvasDrawingParams {
  * @returns Scaled padding value
  */
 export function calculatePadding(qrMargin: number, downloadSize: number): number {
-  return (qrMargin / 300) * downloadSize;
+  return (qrMargin / 200) * downloadSize;
 }
 
 /**
- * Calculates the total canvas size including padding
+ * Calculates the total canvas size including padding and border
  * @param downloadSize - The QR code size
  * @param padding - The padding around the QR code
+ * @param scaledBorderWidth - The scaled border width
  * @returns Total canvas size
  */
-export function calculateTotalSize(downloadSize: number, padding: number): number {
-  return downloadSize + padding * 2;
+export function calculateTotalSize(downloadSize: number, padding: number, scaledBorderWidth: number): number {
+  return downloadSize + padding * 2 + scaledBorderWidth;
 }
 
 /**
@@ -68,22 +69,25 @@ export function calculateScaledBorderWidth(borderWidth: number, downloadSize: nu
  * @param ctx - Canvas 2D context
  * @param totalSize - Size of the rectangle
  * @param radius - Corner radius
+ * @param inset - Optional inset from edges (default 0)
  */
 export function drawRoundedRectPath(
   ctx: CanvasRenderingContext2D,
   totalSize: number,
-  radius: number
+  radius: number,
+  inset: number = 0
 ): void {
+  const size = totalSize - inset * 2;
   ctx.beginPath();
-  ctx.moveTo(radius, 0);
-  ctx.lineTo(totalSize - radius, 0);
-  ctx.quadraticCurveTo(totalSize, 0, totalSize, radius);
-  ctx.lineTo(totalSize, totalSize - radius);
-  ctx.quadraticCurveTo(totalSize, totalSize, totalSize - radius, totalSize);
-  ctx.lineTo(radius, totalSize);
-  ctx.quadraticCurveTo(0, totalSize, 0, totalSize - radius);
-  ctx.lineTo(0, radius);
-  ctx.quadraticCurveTo(0, 0, radius, 0);
+  ctx.moveTo(inset + radius, inset);
+  ctx.lineTo(inset + size - radius, inset);
+  ctx.quadraticCurveTo(inset + size, inset, inset + size, inset + radius);
+  ctx.lineTo(inset + size, inset + size - radius);
+  ctx.quadraticCurveTo(inset + size, inset + size, inset + size - radius, inset + size);
+  ctx.lineTo(inset + radius, inset + size);
+  ctx.quadraticCurveTo(inset, inset + size, inset, inset + size - radius);
+  ctx.lineTo(inset, inset + radius);
+  ctx.quadraticCurveTo(inset, inset, inset + radius, inset);
   ctx.closePath();
 }
 
@@ -92,16 +96,20 @@ export function drawRoundedRectPath(
  * @param params - Canvas drawing parameters
  */
 export function drawBackground(params: CanvasDrawingParams): void {
-  const { ctx, bgColor, totalSize, backgroundBorderStyle, borderRadius, downloadSize } = params;
+  const { ctx, bgColor, totalSize, backgroundBorderStyle, borderRadius, borderWidth, downloadSize } = params;
   
   ctx.fillStyle = bgColor;
   
+  // Inset the background by half the border width to prevent it from showing outside the border
+  const scaledBorderWidth = calculateScaledBorderWidth(borderWidth, downloadSize);
+  const inset = scaledBorderWidth / 2;
+  
   if (backgroundBorderStyle === 'rounded') {
     const radius = calculateScaledBorderRadius(borderRadius, downloadSize);
-    drawRoundedRectPath(ctx, totalSize, radius);
+    drawRoundedRectPath(ctx, totalSize, radius, inset);
     ctx.fill();
   } else {
-    ctx.fillRect(0, 0, totalSize, totalSize);
+    ctx.fillRect(inset, inset, totalSize - scaledBorderWidth, totalSize - scaledBorderWidth);
   }
 }
 
@@ -118,12 +126,15 @@ export function drawBorder(params: CanvasDrawingParams): void {
   ctx.strokeStyle = dotColor;
   ctx.lineWidth = scaledBorderWidth;
   
+  // Inset the stroke by half the border width to prevent clipping
+  const inset = scaledBorderWidth / 2;
+  
   if (backgroundBorderStyle === 'rounded') {
     const radius = calculateScaledBorderRadius(borderRadius, downloadSize);
-    drawRoundedRectPath(ctx, totalSize, radius);
+    drawRoundedRectPath(ctx, totalSize, radius, inset);
     ctx.stroke();
   } else {
-    ctx.strokeRect(0, 0, totalSize, totalSize);
+    ctx.strokeRect(inset, inset, totalSize - scaledBorderWidth, totalSize - scaledBorderWidth);
   }
 }
 
@@ -132,8 +143,11 @@ export function drawBorder(params: CanvasDrawingParams): void {
  * @param params - Canvas drawing parameters
  */
 export function drawQRCode(params: CanvasDrawingParams): void {
-  const { ctx, img, padding, downloadSize } = params;
-  ctx.drawImage(img, padding, padding, downloadSize, downloadSize);
+  const { ctx, img, padding, downloadSize, borderWidth } = params;
+  const scaledBorderWidth = calculateScaledBorderWidth(borderWidth, downloadSize);
+  // Position QR code after border width and padding
+  const offset = scaledBorderWidth / 2 + padding;
+  ctx.drawImage(img, offset, offset, downloadSize, downloadSize);
 }
 
 /**
@@ -141,9 +155,9 @@ export function drawQRCode(params: CanvasDrawingParams): void {
  * @param params - Canvas drawing parameters
  */
 export function drawCompleteCanvas(params: CanvasDrawingParams): void {
-  drawBackground(params);
+    drawBackground(params);
+    drawQRCode(params);
   drawBorder(params);
-  drawQRCode(params);
 }
 
 /**
@@ -177,7 +191,8 @@ export async function createQRCanvas(options: QRCanvasOptions): Promise<HTMLCanv
     img.onload = () => {
       try {
         const padding = calculatePadding(qrMargin, downloadSize);
-        const totalSize = calculateTotalSize(downloadSize, padding);
+        const scaledBorderWidth = calculateScaledBorderWidth(borderWidth, downloadSize);
+        const totalSize = calculateTotalSize(downloadSize, padding, scaledBorderWidth);
         
         canvas.width = totalSize;
         canvas.height = totalSize;

@@ -49,30 +49,36 @@ describe('qrCanvas calculation functions', () => {
 
   describe('calculateTotalSize', () => {
     it('should calculate total size correctly', () => {
-      expect(calculateTotalSize(1000, 100)).toBe(1200);
-      expect(calculateTotalSize(2048, 204.8)).toBeCloseTo(2457.6, 1);
+      expect(calculateTotalSize(1000, 100, 0)).toBe(1200);
+      expect(calculateTotalSize(2048, 204.8, 0)).toBeCloseTo(2457.6, 1);
     });
 
     it('should handle zero padding', () => {
-      expect(calculateTotalSize(1000, 0)).toBe(1000);
-      expect(calculateTotalSize(2048, 0)).toBe(2048);
+      expect(calculateTotalSize(1000, 0, 0)).toBe(1000);
+      expect(calculateTotalSize(2048, 0, 0)).toBe(2048);
     });
 
     it('should handle very small padding', () => {
-      expect(calculateTotalSize(1000, 0.5)).toBe(1001);
-      expect(calculateTotalSize(1000, 1)).toBe(1002);
+      expect(calculateTotalSize(1000, 0.5, 0)).toBe(1001);
+      expect(calculateTotalSize(1000, 1, 0)).toBe(1002);
     });
 
     it('should handle very large padding', () => {
-      expect(calculateTotalSize(1000, 500)).toBe(2000);
-      expect(calculateTotalSize(1000, 1000)).toBe(3000);
+      expect(calculateTotalSize(1000, 500, 0)).toBe(2000);
+      expect(calculateTotalSize(1000, 1000, 0)).toBe(3000);
     });
 
-    it('should correctly add padding on both sides', () => {
+    it('should correctly add padding on both sides and border width', () => {
       const downloadSize = 1000;
       const padding = 50;
-      const totalSize = calculateTotalSize(downloadSize, padding);
-      expect(totalSize - downloadSize).toBe(padding * 2);
+      const borderWidth = 20;
+      const totalSize = calculateTotalSize(downloadSize, padding, borderWidth);
+      expect(totalSize - downloadSize).toBe(padding * 2 + borderWidth);
+    });
+
+    it('should account for border width in total size', () => {
+      expect(calculateTotalSize(1000, 100, 20)).toBe(1220);
+      expect(calculateTotalSize(2048, 204.8, 50)).toBeCloseTo(2507.6, 1);
     });
   });
 
@@ -297,7 +303,14 @@ describe('qrCanvas drawing functions', () => {
 
       expect(mockCtx.strokeStyle).toBe('#000000');
       expect(mockCtx.lineWidth).toBeCloseTo(16.67, 1);
-      expect(mockCtx.strokeRect).toHaveBeenCalledWith(0, 0, 1100, 1100);
+      // Border should be inset by half its width
+      const halfBorderWidth = 16.67 / 2;
+      expect(mockCtx.strokeRect).toHaveBeenCalledWith(
+        halfBorderWidth,
+        halfBorderWidth,
+        1100 - 16.67,
+        1100 - 16.67
+      );
     });
 
     it('should draw rounded border correctly', () => {
@@ -372,26 +385,34 @@ describe('qrCanvas drawing functions', () => {
       backgroundBorderStyle: 'square',
     });
 
-    it('should draw QR code at correct position with padding', () => {
+    it('should draw QR code at correct position with padding and border', () => {
       drawQRCode(getBaseParams());
 
+      // scaledBorderWidth = (5 / 300) * 1000 = 16.67
+      // offset = 16.67/2 + 50 = 58.335
+      const scaledBorderWidth = (5 / 300) * 1000;
+      const expectedOffset = scaledBorderWidth / 2 + 50;
       expect(mockCtx.drawImage).toHaveBeenCalledWith(
         mockImg,
-        50,
-        50,
+        expectedOffset,
+        expectedOffset,
         1000,
         1000
       );
     });
 
-    it('should draw QR code at origin when padding is 0', () => {
+    it('should draw QR code with only border offset when padding is 0', () => {
       const params = { ...getBaseParams(), padding: 0 };
       drawQRCode(params);
 
+      // scaledBorderWidth = (5 / 300) * 1000 = 16.67
+      // offset = 16.67/2 + 0 = 8.335
+      const scaledBorderWidth = (5 / 300) * 1000;
+      const expectedOffset = scaledBorderWidth / 2;
       expect(mockCtx.drawImage).toHaveBeenCalledWith(
         mockImg,
-        0,
-        0,
+        expectedOffset,
+        expectedOffset,
         1000,
         1000
       );
@@ -401,10 +422,14 @@ describe('qrCanvas drawing functions', () => {
       const params = { ...getBaseParams(), padding: 500 };
       drawQRCode(params);
 
+      // scaledBorderWidth = (5 / 300) * 1000 = 16.67
+      // offset = 16.67/2 + 500 = 508.335
+      const scaledBorderWidth = (5 / 300) * 1000;
+      const expectedOffset = scaledBorderWidth / 2 + 500;
       expect(mockCtx.drawImage).toHaveBeenCalledWith(
         mockImg,
-        500,
-        500,
+        expectedOffset,
+        expectedOffset,
         1000,
         1000
       );
@@ -414,10 +439,14 @@ describe('qrCanvas drawing functions', () => {
       const params = { ...getBaseParams(), downloadSize: 2048 };
       drawQRCode(params);
 
+      // scaledBorderWidth = (5 / 300) * 2048 = 34.13
+      // offset = 34.13/2 + 50 = 67.065
+      const scaledBorderWidth = (5 / 300) * 2048;
+      const expectedOffset = scaledBorderWidth / 2 + 50;
       expect(mockCtx.drawImage).toHaveBeenCalledWith(
         mockImg,
-        50,
-        50,
+        expectedOffset,
+        expectedOffset,
         2048,
         2048
       );
@@ -466,7 +495,16 @@ describe('qrCanvas drawing functions', () => {
       drawCompleteCanvas(params);
 
       expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 1000, 1000);
-      expect(mockCtx.drawImage).toHaveBeenCalledWith(mockImg, 0, 0, 1000, 1000);
+      // QR code still offset by half border width
+      const scaledBorderWidth = (5 / 300) * 1000;
+      const expectedOffset = scaledBorderWidth / 2;
+      expect(mockCtx.drawImage).toHaveBeenCalledWith(
+        mockImg,
+        expectedOffset,
+        expectedOffset,
+        1000,
+        1000
+      );
     });
   });
 });
@@ -475,8 +513,8 @@ describe('Edge case combinations', () => {
   describe('Border and Padding interactions', () => {
     it('should handle zero border with zero padding', () => {
       const padding = calculatePadding(0, 1000);
-      const totalSize = calculateTotalSize(1000, padding);
       const borderWidth = calculateScaledBorderWidth(0, 1000);
+      const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
       expect(padding).toBe(0);
       expect(totalSize).toBe(1000);
@@ -485,41 +523,41 @@ describe('Edge case combinations', () => {
 
     it('should handle maximum border with maximum padding', () => {
       const padding = calculatePadding(50, 1000);
-      const totalSize = calculateTotalSize(1000, padding);
       const borderWidth = calculateScaledBorderWidth(20, 1000);
+      const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
       expect(padding).toBeCloseTo(166.67, 1);
-      expect(totalSize).toBeCloseTo(1333.33, 1);
+      expect(totalSize).toBeCloseTo(1400, 1); // 1000 + 166.67*2 + 66.67
       expect(borderWidth).toBeCloseTo(66.67, 1);
     });
 
     it('should handle very small border with very small padding', () => {
       const padding = calculatePadding(1, 1000);
-      const totalSize = calculateTotalSize(1000, padding);
       const borderWidth = calculateScaledBorderWidth(1, 1000);
+      const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
       expect(padding).toBeCloseTo(3.33, 1);
-      expect(totalSize).toBeCloseTo(1006.67, 1);
+      expect(totalSize).toBeCloseTo(1010, 1); // 1000 + 3.33*2 + 3.33
       expect(borderWidth).toBeCloseTo(3.33, 1);
     });
 
     it('should handle large border with small padding', () => {
       const padding = calculatePadding(5, 1000);
-      const totalSize = calculateTotalSize(1000, padding);
       const borderWidth = calculateScaledBorderWidth(20, 1000);
+      const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
       expect(padding).toBeCloseTo(16.67, 1);
-      expect(totalSize).toBeCloseTo(1033.33, 1);
+      expect(totalSize).toBeCloseTo(1100, 1); // 1000 + 16.67*2 + 66.67
       expect(borderWidth).toBeCloseTo(66.67, 1);
     });
 
     it('should handle small border with large padding', () => {
       const padding = calculatePadding(50, 1000);
-      const totalSize = calculateTotalSize(1000, padding);
       const borderWidth = calculateScaledBorderWidth(1, 1000);
+      const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
       expect(padding).toBeCloseTo(166.67, 1);
-      expect(totalSize).toBeCloseTo(1333.33, 1);
+      expect(totalSize).toBeCloseTo(1336.67, 1); // 1000 + 166.67*2 + 3.33
       expect(borderWidth).toBeCloseTo(3.33, 1);
     });
   });
@@ -527,21 +565,21 @@ describe('Edge case combinations', () => {
   describe('Extreme download sizes', () => {
     it('should handle very small download size (512)', () => {
       const padding = calculatePadding(20, 512);
-      const totalSize = calculateTotalSize(512, padding);
       const borderWidth = calculateScaledBorderWidth(10, 512);
+      const totalSize = calculateTotalSize(512, padding, borderWidth);
 
       expect(padding).toBeCloseTo(34.13, 1);
-      expect(totalSize).toBeCloseTo(580.27, 1);
+      expect(totalSize).toBeCloseTo(597.33, 1); // 512 + 34.13*2 + 17.07
       expect(borderWidth).toBeCloseTo(17.07, 1);
     });
 
     it('should handle large download size (2048)', () => {
       const padding = calculatePadding(20, 2048);
-      const totalSize = calculateTotalSize(2048, padding);
       const borderWidth = calculateScaledBorderWidth(10, 2048);
+      const totalSize = calculateTotalSize(2048, padding, borderWidth);
 
       expect(padding).toBeCloseTo(136.53, 1);
-      expect(totalSize).toBeCloseTo(2321.07, 1);
+      expect(totalSize).toBeCloseTo(2389.33, 1); // 2048 + 136.53*2 + 68.27
       expect(borderWidth).toBeCloseTo(68.27, 1);
     });
 
