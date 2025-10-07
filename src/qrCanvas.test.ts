@@ -14,9 +14,9 @@ import {
 describe('qrCanvas calculation functions', () => {
   describe('calculatePadding', () => {
     it('should calculate padding correctly for typical values', () => {
-      expect(calculatePadding(20, 1000)).toBeCloseTo(66.67, 1);
-      expect(calculatePadding(10, 1000)).toBeCloseTo(33.33, 1);
-      expect(calculatePadding(30, 2048)).toBeCloseTo(204.8, 1);
+      expect(calculatePadding(20, 1000)).toBeCloseTo(100, 1);
+      expect(calculatePadding(10, 1000)).toBeCloseTo(50, 1);
+      expect(calculatePadding(30, 2048)).toBeCloseTo(307.2, 1);
     });
 
     it('should handle zero margin', () => {
@@ -25,8 +25,8 @@ describe('qrCanvas calculation functions', () => {
     });
 
     it('should handle maximum margin (50)', () => {
-      expect(calculatePadding(50, 1000)).toBeCloseTo(166.67, 1);
-      expect(calculatePadding(50, 2048)).toBeCloseTo(341.33, 1);
+      expect(calculatePadding(50, 1000)).toBeCloseTo(250, 1);
+      expect(calculatePadding(50, 2048)).toBeCloseTo(512, 1);
     });
 
     it('should scale proportionally with download size', () => {
@@ -37,13 +37,13 @@ describe('qrCanvas calculation functions', () => {
     });
 
     it('should handle very small margins', () => {
-      expect(calculatePadding(1, 1000)).toBeCloseTo(3.33, 1);
-      expect(calculatePadding(0.5, 1000)).toBeCloseTo(1.67, 1);
+      expect(calculatePadding(1, 1000)).toBeCloseTo(5, 1);
+      expect(calculatePadding(0.5, 1000)).toBeCloseTo(2.5, 1);
     });
 
     it('should handle very large download sizes', () => {
-      expect(calculatePadding(20, 5000)).toBeCloseTo(333.33, 1);
-      expect(calculatePadding(20, 10000)).toBeCloseTo(666.67, 1);
+      expect(calculatePadding(20, 5000)).toBeCloseTo(500, 1);
+      expect(calculatePadding(20, 10000)).toBeCloseTo(1000, 1);
     });
   });
 
@@ -248,8 +248,16 @@ describe('qrCanvas drawing functions', () => {
     it('should draw square background correctly', () => {
       drawBackground(getBaseParams());
 
+      // Background should be inset by half the border width
+      const scaledBorderWidth = (5 / 300) * 1000;
+      const inset = scaledBorderWidth / 2;
       expect(mockCtx.fillStyle).toBe('#ffffff');
-      expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 1100, 1100);
+      expect(mockCtx.fillRect).toHaveBeenCalledWith(
+        inset,
+        inset,
+        1100 - scaledBorderWidth,
+        1100 - scaledBorderWidth
+      );
       expect(mockCtx.fill).not.toHaveBeenCalled();
     });
 
@@ -267,7 +275,15 @@ describe('qrCanvas drawing functions', () => {
       const params = { ...getBaseParams(), padding: 0, totalSize: 1000 };
       drawBackground(params);
 
-      expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 1000, 1000);
+      // Background should be inset by half the border width
+      const scaledBorderWidth = (5 / 300) * 1000;
+      const inset = scaledBorderWidth / 2;
+      expect(mockCtx.fillRect).toHaveBeenCalledWith(
+        inset,
+        inset,
+        1000 - scaledBorderWidth,
+        1000 - scaledBorderWidth
+      );
     });
 
     it('should handle edge case: zero padding with rounded background', () => {
@@ -302,14 +318,15 @@ describe('qrCanvas drawing functions', () => {
       drawBorder(getBaseParams());
 
       expect(mockCtx.strokeStyle).toBe('#000000');
-      expect(mockCtx.lineWidth).toBeCloseTo(16.67, 1);
+      const scaledBorderWidth = (5 / 300) * 1000;
+      expect(mockCtx.lineWidth).toBeCloseTo(scaledBorderWidth, 1);
       // Border should be inset by half its width
-      const halfBorderWidth = 16.67 / 2;
+      const halfBorderWidth = scaledBorderWidth / 2;
       expect(mockCtx.strokeRect).toHaveBeenCalledWith(
         halfBorderWidth,
         halfBorderWidth,
-        1100 - 16.67,
-        1100 - 16.67
+        1100 - scaledBorderWidth,
+        1100 - scaledBorderWidth
       );
     });
 
@@ -494,9 +511,16 @@ describe('qrCanvas drawing functions', () => {
       const params = { ...getBaseParams(), padding: 0, totalSize: 1000 };
       drawCompleteCanvas(params);
 
-      expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 1000, 1000);
-      // QR code still offset by half border width
+      // Background should be inset by half the border width
       const scaledBorderWidth = (5 / 300) * 1000;
+      const inset = scaledBorderWidth / 2;
+      expect(mockCtx.fillRect).toHaveBeenCalledWith(
+        inset,
+        inset,
+        1000 - scaledBorderWidth,
+        1000 - scaledBorderWidth
+      );
+      // QR code still offset by half border width
       const expectedOffset = scaledBorderWidth / 2;
       expect(mockCtx.drawImage).toHaveBeenCalledWith(
         mockImg,
@@ -526,8 +550,8 @@ describe('Edge case combinations', () => {
       const borderWidth = calculateScaledBorderWidth(20, 1000);
       const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
-      expect(padding).toBeCloseTo(166.67, 1);
-      expect(totalSize).toBeCloseTo(1400, 1); // 1000 + 166.67*2 + 66.67
+      expect(padding).toBeCloseTo(250, 1);
+      expect(totalSize).toBeCloseTo(1566.67, 1); // 1000 + 250*2 + 66.67
       expect(borderWidth).toBeCloseTo(66.67, 1);
     });
 
@@ -536,8 +560,8 @@ describe('Edge case combinations', () => {
       const borderWidth = calculateScaledBorderWidth(1, 1000);
       const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
-      expect(padding).toBeCloseTo(3.33, 1);
-      expect(totalSize).toBeCloseTo(1010, 1); // 1000 + 3.33*2 + 3.33
+      expect(padding).toBeCloseTo(5, 1);
+      expect(totalSize).toBeCloseTo(1013.33, 1); // 1000 + 5*2 + 3.33
       expect(borderWidth).toBeCloseTo(3.33, 1);
     });
 
@@ -546,8 +570,8 @@ describe('Edge case combinations', () => {
       const borderWidth = calculateScaledBorderWidth(20, 1000);
       const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
-      expect(padding).toBeCloseTo(16.67, 1);
-      expect(totalSize).toBeCloseTo(1100, 1); // 1000 + 16.67*2 + 66.67
+      expect(padding).toBeCloseTo(25, 1);
+      expect(totalSize).toBeCloseTo(1116.67, 1); // 1000 + 25*2 + 66.67
       expect(borderWidth).toBeCloseTo(66.67, 1);
     });
 
@@ -556,8 +580,8 @@ describe('Edge case combinations', () => {
       const borderWidth = calculateScaledBorderWidth(1, 1000);
       const totalSize = calculateTotalSize(1000, padding, borderWidth);
 
-      expect(padding).toBeCloseTo(166.67, 1);
-      expect(totalSize).toBeCloseTo(1336.67, 1); // 1000 + 166.67*2 + 3.33
+      expect(padding).toBeCloseTo(250, 1);
+      expect(totalSize).toBeCloseTo(1503.33, 1); // 1000 + 250*2 + 3.33
       expect(borderWidth).toBeCloseTo(3.33, 1);
     });
   });
@@ -568,8 +592,8 @@ describe('Edge case combinations', () => {
       const borderWidth = calculateScaledBorderWidth(10, 512);
       const totalSize = calculateTotalSize(512, padding, borderWidth);
 
-      expect(padding).toBeCloseTo(34.13, 1);
-      expect(totalSize).toBeCloseTo(597.33, 1); // 512 + 34.13*2 + 17.07
+      expect(padding).toBeCloseTo(51.2, 1);
+      expect(totalSize).toBeCloseTo(631.47, 1); // 512 + 51.2*2 + 17.07
       expect(borderWidth).toBeCloseTo(17.07, 1);
     });
 
@@ -578,8 +602,8 @@ describe('Edge case combinations', () => {
       const borderWidth = calculateScaledBorderWidth(10, 2048);
       const totalSize = calculateTotalSize(2048, padding, borderWidth);
 
-      expect(padding).toBeCloseTo(136.53, 1);
-      expect(totalSize).toBeCloseTo(2389.33, 1); // 2048 + 136.53*2 + 68.27
+      expect(padding).toBeCloseTo(204.8, 1);
+      expect(totalSize).toBeCloseTo(2525.87, 1); // 2048 + 204.8*2 + 68.27
       expect(borderWidth).toBeCloseTo(68.27, 1);
     });
 
