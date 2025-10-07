@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaGithub } from 'react-icons/fa';
+import { FaGithub, FaCopy, FaDownload, FaUpload, FaFileImport, FaFileExport, FaCheck, FaTimes } from 'react-icons/fa';
 import QRCodeStyling from 'qr-code-styling';
 import { createQRCanvas, downloadCanvas } from './qrCanvas';
 import './styles.css';
@@ -18,11 +18,15 @@ const App: React.FC = () => {
   const [borderRadius, setBorderRadius] = useState(20);
   const [borderWidth, setBorderWidth] = useState(0);
   const [configPaste, setConfigPaste] = useState('');
+  const [configTab, setConfigTab] = useState<'export' | 'import'>('export');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
+  const [isDragging, setIsDragging] = useState(false);
 
   const qrCodeRef = useRef<HTMLDivElement>(null);
   const qrCodeContainerRef = useRef<HTMLDivElement>(null);
   const qrCode = useRef<QRCodeStyling | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const configFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (qrCodeRef.current) {
@@ -119,10 +123,16 @@ const App: React.FC = () => {
     if (Number.isFinite(cfg.borderWidth)) setBorderWidth(Math.max(0, Math.min(20, Number(cfg.borderWidth))));
   };
 
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast({ message: '', type: null }), 3000);
+  };
+
   const onCopyConfigClick = async () => {
     const json = JSON.stringify(getConfigObject(), null, 2);
     try {
       await navigator.clipboard.writeText(json);
+      showToast('Configuration copied to clipboard!', 'success');
     } catch (e) {
       const tempTextArea = document.createElement('textarea');
       tempTextArea.value = json;
@@ -130,6 +140,9 @@ const App: React.FC = () => {
       tempTextArea.select();
       try {
         document.execCommand('copy');
+        showToast('Configuration copied to clipboard!', 'success');
+      } catch (err) {
+        showToast('Failed to copy configuration', 'error');
       } finally {
         document.body.removeChild(tempTextArea);
       }
@@ -144,14 +157,17 @@ const App: React.FC = () => {
     link.download = 'qr-config.json';
     link.click();
     URL.revokeObjectURL(link.href);
+    showToast('Configuration saved successfully!', 'success');
   };
 
   const onApplyPastedConfig = () => {
     try {
       const parsed = JSON.parse(configPaste);
       applyConfig(parsed);
+      setConfigPaste('');
+      showToast('Configuration applied successfully!', 'success');
     } catch (e) {
-      // ignore parse errors silently to keep this low-emphasis
+      showToast('Invalid JSON format. Please check your configuration.', 'error');
     }
   };
 
@@ -163,10 +179,43 @@ const App: React.FC = () => {
       try {
         const parsed = JSON.parse(String(reader.result || ''));
         applyConfig(parsed);
+        showToast(`Configuration loaded from ${file.name}`, 'success');
       } catch (err) {
-        // ignore errors silently
+        showToast('Failed to parse configuration file', 'error');
       } finally {
         e.currentTarget.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.json')) {
+      showToast('Please drop a JSON file', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || ''));
+        applyConfig(parsed);
+        showToast(`Configuration loaded from ${file.name}`, 'success');
+      } catch (err) {
+        showToast('Failed to parse configuration file', 'error');
       }
     };
     reader.readAsText(file);
@@ -375,39 +424,100 @@ const App: React.FC = () => {
             </select>
           </div>
           <button className="download-button" onClick={onDownloadClick}>
-            Download QR Code
+            <FaDownload /> Download QR Code
           </button>
-          <div className="secondary-actions">
-            <button className="secondary-action" onClick={onCopyConfigClick}>
-              Copy configuration
-            </button>
-            <button className="secondary-action" onClick={onSaveConfigClick}>
-              Save configuration to file
-            </button>
-            <details className="secondary-load">
-              <summary>Load configuration</summary>
-              <div className="load-body">
-                <textarea
-                  className="config-textarea"
-                  placeholder="Paste JSON configuration here"
-                  value={configPaste}
-                  onChange={(e) => setConfigPaste(e.target.value)}
-                />
-                <div className="load-actions">
-                  <button className="secondary-action" onClick={onApplyPastedConfig}>
-                    Apply pasted config
+          
+          <div className="config-manager">
+            <div className="config-header">
+              <h3>Configuration Manager</h3>
+            </div>
+            <div className="config-tabs">
+              <button 
+                className={`config-tab ${configTab === 'export' ? 'active' : ''}`}
+                onClick={() => setConfigTab('export')}
+              >
+                <FaFileExport /> Export
+              </button>
+              <button 
+                className={`config-tab ${configTab === 'import' ? 'active' : ''}`}
+                onClick={() => setConfigTab('import')}
+              >
+                <FaFileImport /> Import
+              </button>
+            </div>
+            
+            {configTab === 'export' && (
+              <div className="config-content">
+                <p className="config-description">Save or copy your current QR code settings</p>
+                <div className="config-actions">
+                  <button className="config-action-button" onClick={onCopyConfigClick}>
+                    <FaCopy /> Copy to Clipboard
                   </button>
-                  <div className="file-input-wrapper" style={{ width: '100%' }}>
-                    <div className="file-input-button">Upload config file</div>
-                    <input type="file" accept="application/json,.json" onChange={onConfigFileChange} />
-                  </div>
+                  <button className="config-action-button" onClick={onSaveConfigClick}>
+                    <FaDownload /> Download File
+                  </button>
                 </div>
               </div>
-            </details>
+            )}
+            
+            {configTab === 'import' && (
+              <div className="config-content">
+                <p className="config-description">Restore settings from a saved configuration</p>
+                
+                <div 
+                  className={`drop-zone ${isDragging ? 'dragging' : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => configFileInputRef.current?.click()}
+                >
+                  <FaUpload className="drop-zone-icon" />
+                  <p className="drop-zone-text">
+                    {isDragging ? 'Drop file here' : 'Drag & drop or click to upload'}
+                  </p>
+                  <p className="drop-zone-subtext">JSON files only</p>
+                  <input 
+                    type="file" 
+                    ref={configFileInputRef}
+                    accept="application/json,.json" 
+                    onChange={onConfigFileChange}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+                
+                <div className="divider">
+                  <span>OR</span>
+                </div>
+                
+                <div className="paste-section">
+                  <textarea
+                    className="config-textarea"
+                    placeholder="Paste JSON configuration here..."
+                    value={configPaste}
+                    onChange={(e) => setConfigPaste(e.target.value)}
+                  />
+                  <button 
+                    className="config-action-button"
+                    onClick={onApplyPastedConfig}
+                    disabled={!configPaste.trim()}
+                  >
+                    <FaCheck /> Apply Configuration
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-            <div className="github-link">
+      
+      {toast.type && (
+        <div className={`toast toast-${toast.type}`}>
+          {toast.type === 'success' ? <FaCheck /> : <FaTimes />}
+          <span>{toast.message}</span>
+        </div>
+      )}
+      
+      <div className="github-link">
         <a href="https://github.com/kamal94/qr-code-generator" target="_blank" rel="noopener noreferrer">
           <FaGithub /> View on GitHub
         </a>
