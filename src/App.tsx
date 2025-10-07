@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [backgroundBorderStyle, setBackgroundBorderStyle] = useState('rounded');
   const [borderRadius, setBorderRadius] = useState(20);
   const [borderWidth, setBorderWidth] = useState(0);
+  const [configPaste, setConfigPaste] = useState('');
 
   const qrCodeRef = useRef<HTMLDivElement>(null);
   const qrCodeContainerRef = useRef<HTMLDivElement>(null);
@@ -93,7 +94,98 @@ const App: React.FC = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    if (qrCode.current) {
+      qrCode.current.update({ image: '' });
+    }
   };
+
+  const isOneOf = <T,>(val: any, allowed: readonly T[]): val is T =>
+    allowed.includes(val);
+
+  const applyConfig = (cfg: any) => {
+    if (!cfg || typeof cfg !== 'object') return;
+    if (typeof cfg.url === 'string') setUrl(cfg.url);
+    if (typeof cfg.bgColor === 'string') setBgColor(cfg.bgColor);
+    if (typeof cfg.dotColor === 'string') setDotColor(cfg.dotColor);
+    if (isOneOf(cfg.dotStyle, ['square', 'dots', 'rounded'] as const)) setDotStyle(cfg.dotStyle);
+    if (isOneOf(cfg.cornerSquareStyle, ['square', 'extra-rounded', 'dot'] as const)) setCornerSquareStyle(cfg.cornerSquareStyle);
+    if (isOneOf(cfg.cornerDotStyle, ['square', 'dot'] as const)) setCornerDotStyle(cfg.cornerDotStyle);
+    if (typeof cfg.centerImage === 'string' || cfg.centerImage === null) setCenterImage(cfg.centerImage);
+    if (Number.isFinite(cfg.qrMargin)) setQrMargin(Math.max(0, Math.min(50, Number(cfg.qrMargin))));
+    if (Number.isFinite(cfg.downloadSize)) setDownloadSize(Number(cfg.downloadSize));
+    if (typeof cfg.backgroundBorderStyle === 'string') setBackgroundBorderStyle(cfg.backgroundBorderStyle);
+    if (Number.isFinite(cfg.borderRadius)) setBorderRadius(Math.max(0, Math.min(50, Number(cfg.borderRadius))));
+    if (Number.isFinite(cfg.borderWidth)) setBorderWidth(Math.max(0, Math.min(20, Number(cfg.borderWidth))));
+  };
+
+  const onCopyConfigClick = async () => {
+    const json = JSON.stringify(getConfigObject(), null, 2);
+    try {
+      await navigator.clipboard.writeText(json);
+    } catch (e) {
+      const tempTextArea = document.createElement('textarea');
+      tempTextArea.value = json;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      try {
+        document.execCommand('copy');
+      } finally {
+        document.body.removeChild(tempTextArea);
+      }
+    }
+  };
+
+  const onSaveConfigClick = () => {
+    const json = JSON.stringify(getConfigObject(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'qr-config.json';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  const onApplyPastedConfig = () => {
+    try {
+      const parsed = JSON.parse(configPaste);
+      applyConfig(parsed);
+    } catch (e) {
+      // ignore parse errors silently to keep this low-emphasis
+    }
+  };
+
+  const onConfigFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result || ''));
+        applyConfig(parsed);
+      } catch (err) {
+        // ignore errors silently
+      } finally {
+        e.currentTarget.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const getConfigObject = () => ({
+    url,
+    bgColor,
+    dotColor,
+    dotStyle,
+    cornerSquareStyle,
+    cornerDotStyle,
+    centerImage,
+    qrMargin,
+    downloadSize,
+    backgroundBorderStyle,
+    borderRadius,
+    borderWidth,
+  });
+
 
   const onDownloadClick = () => {
     const tempQrCode = new QRCodeStyling({
@@ -113,9 +205,10 @@ const App: React.FC = () => {
       const img = new Image();
       img.onload = () => {
         const padding = (qrMargin / 300) * downloadSize; // Scale padding proportionally
+        console.log({padding, qrMargin, downloadSize})
         const totalSize = downloadSize + padding * 2;
-        canvas.width = totalSize;
-        canvas.height = totalSize;
+        canvas.width = totalSize+300;
+        canvas.height = totalSize+300;
 
         // Draw background color and border
         ctx.fillStyle = bgColor;
@@ -335,6 +428,34 @@ const App: React.FC = () => {
           <button className="download-button" onClick={onDownloadClick}>
             Download QR Code
           </button>
+          <div className="secondary-actions">
+            <button className="secondary-action" onClick={onCopyConfigClick}>
+              Copy configuration
+            </button>
+            <button className="secondary-action" onClick={onSaveConfigClick}>
+              Save configuration to file
+            </button>
+            <details className="secondary-load">
+              <summary>Load configuration</summary>
+              <div className="load-body">
+                <textarea
+                  className="config-textarea"
+                  placeholder="Paste JSON configuration here"
+                  value={configPaste}
+                  onChange={(e) => setConfigPaste(e.target.value)}
+                />
+                <div className="load-actions">
+                  <button className="secondary-action" onClick={onApplyPastedConfig}>
+                    Apply pasted config
+                  </button>
+                  <div className="file-input-wrapper" style={{ width: '100%' }}>
+                    <div className="file-input-button">Upload config file</div>
+                    <input type="file" accept="application/json,.json" onChange={onConfigFileChange} />
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
             <div className="github-link">

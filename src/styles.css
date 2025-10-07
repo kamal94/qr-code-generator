@@ -181,3 +181,74 @@ input[type="file"] {
 .github-link svg {
   font-size: 20px;
 }
+
+/* Secondary actions below the main download button */
+.secondary-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.secondary-action {
+  background: transparent;
+  color: #6c757d;
+  border: 1px dashed #e6e6e6;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.secondary-action:hover {
+  color: #495057;
+  border-color: #d0d0d0;
+  background-color: #fafafa;
+}
+
+/* Load configuration (kept subtle) */
+.secondary-load {
+  width: 100%;
+}
+
+.secondary-load > summary {
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 13px;
+  list-style: none;
+  outline: none;
+}
+
+.secondary-load[open] > summary {
+  color: #495057;
+}
+
+.load-body {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-textarea {
+  width: 100%;
+  min-height: 90px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  border: 1px solid #e6e6e6;
+  border-radius: 4px;
+  padding: 8px;
+  resize: vertical;
+  color: #495057;
+  background: #fff;
+}
+
+.load-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
