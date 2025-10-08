@@ -2,7 +2,7 @@
 
 A modern, feature-rich QR code generator built with React and TypeScript. Create beautiful, customizable QR codes with live preview, save and restore configurations, and download in multiple resolutions.
 
-![screenshot](screenshot.png)
+[![screenshot](screenshot.png)](https://qr.kamalaldin.com)
 
 ## Features
 
