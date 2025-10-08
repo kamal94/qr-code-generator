@@ -2,6 +2,8 @@
 
 A modern, feature-rich QR code generator built with React and TypeScript. Create beautiful, customizable QR codes with live preview, save and restore configurations, and download in multiple resolutions.
 
+![screenshot](screenshot.png)
+
 ## Features
 
 - **Live Preview** - Real-time QR code generation as you customize
