@@ -1,46 +1,214 @@
-# Getting Started with Create React App
+# QR Code Generator
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, feature-rich QR code generator built with React and TypeScript. Create beautiful, customizable QR codes with live preview, save and restore configurations, and download in multiple resolutions.
+
+## Features
+
+- **Live Preview** - Real-time QR code generation as you customize
+- **Full Customization**
+  - Custom colors for background and dots
+  - Multiple dot shapes (square, circle, rounded)
+  - Customizable corner styles
+  - Adjustable margins and borders
+  - Border radius control for rounded backgrounds
+  - Center logo/image support
+- **Configuration Management**
+  - Export configurations as JSON
+  - Import configurations from file or clipboard
+  - Drag & drop configuration files
+  - Save and share QR code designs
+- **High-Resolution Export** - Download QR codes in 512x512, 1024x1024, or 2048x2048 resolution
+- **Responsive Design** - Works seamlessly on desktop and mobile devices
+
+## Tech Stack
+
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **qr-code-styling** - QR code generation library
+- **html2canvas** - Canvas manipulation
+- **React Icons** - Icon library
+- **Docker** - Containerization support
+- **GitHub Actions** - CI/CD pipeline
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 16+ and npm
+- (Optional) Docker for containerized deployment
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/kamal94/qr-code-generator.git
+cd qr-code-generator
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm start
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Available Scripts
 
-In the project directory, you can run:
-
 ### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Runs the app in development mode at [http://localhost:3000](http://localhost:3000)
 
 ### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in interactive watch mode
 
 ### `npm run build`
+Builds the production-ready app to the `build` folder
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Docker Deployment
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Using Make (Recommended)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The project includes a Makefile for easy Docker operations:
 
-### `npm run eject`
+```bash
+# Build the Docker image
+make build
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+# Run the container (available at http://localhost:8080)
+make run
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+# View logs
+make logs
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+# Open in browser (macOS)
+make open
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+# Stop the container
+make stop
 
-## Learn More
+# Clean up images and containers
+make clean
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# Rebuild from scratch
+make rebuild
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Manual Docker Commands
+
+```bash
+# Build the image
+docker build -t qr-code-generator:local .
+
+# Run the container
+docker run -d --name qr-code-generator -p 8080:80 qr-code-generator:local
+
+# Stop and remove
+docker rm -f qr-code-generator
+```
+
+## Usage
+
+### Creating a QR Code
+
+1. Enter your target URL in the "Target URL" field
+2. Customize appearance:
+   - Choose background and dot colors
+   - Select dot shapes and corner styles
+   - Adjust margins, borders, and border radius
+   - Upload a center image/logo (optional)
+3. Preview updates in real-time
+4. Select desired download resolution
+5. Click "Download QR Code" to save
+
+### Configuration Management
+
+#### Export Configuration
+1. Click the "Export" tab in Configuration Manager
+2. Choose to either:
+   - Copy to clipboard for quick sharing
+   - Download as JSON file for later use
+
+#### Import Configuration
+1. Click the "Import" tab in Configuration Manager
+2. Either:
+   - Drag & drop a JSON configuration file
+   - Click to browse and select a file
+   - Paste JSON directly into the text area
+3. Configuration applies immediately
+
+### Example Configuration
+
+```json
+{
+  "url": "https://example.com",
+  "bgColor": "#f0f8ff",
+  "dotColor": "#1a2a45",
+  "dotStyle": "rounded",
+  "cornerSquareStyle": "extra-rounded",
+  "cornerDotStyle": "dot",
+  "centerImage": null,
+  "qrMargin": 20,
+  "downloadSize": 1024,
+  "backgroundBorderStyle": "rounded",
+  "borderRadius": 20,
+  "borderWidth": 0
+}
+```
+
+## Deployment
+
+### GitHub Pages
+
+The project includes a GitHub Actions workflow that automatically deploys to GitHub Pages on every push to the `master` branch.
+
+To enable:
+1. Push your code to GitHub
+2. Enable GitHub Pages in repository settings
+3. Set source to `gh-pages` branch
+4. The site will be available at `https://[username].github.io/qr-code-generator/`
+
+### Other platforms
+
+The built application is a static React app and can be deployed to:
+- Vercel
+- Netlify
+- AWS S3 + CloudFront
+- Azure Static Web Apps
+- Any static hosting service
+
+Simply run `npm run build` and deploy the `build` folder.
+
+## Testing
+
+Run the test suite:
+```bash
+npm test
+```
+
+The project includes:
+- Component tests for the main App
+- Canvas manipulation tests for QR code generation
+- Configuration import/export tests
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is open source and available under the MIT License.
+
+## Links
+
+- **Live Demo**: [GitHub Pages](https://kamal94.github.io/qr-code-generator/)
+- **Repository**: [GitHub](https://github.com/kamal94/qr-code-generator)
+
+## Acknowledgments
+
+- Built with [qr-code-styling](https://github.com/kozakdenys/qr-code-styling)
+- Icons from [react-icons](https://react-icons.github.io/react-icons/)
+- Bootstrapped with [Create React App](https://create-react-app.dev/)
