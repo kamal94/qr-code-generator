@@ -55,7 +55,7 @@ const App: React.FC = () => {
       });
       qrCode.current.append(qrCodeRef.current);
     }
-  }, []);
+  }, [url, bgColor, dotColor, dotStyle, cornerSquareStyle, cornerDotStyle, centerImage]);
 
   useEffect(() => {
     if (qrCode.current) {
