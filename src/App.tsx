@@ -517,9 +517,14 @@ const App: React.FC = () => {
         </div>
       )}
       
-      <div className="github-link">
-        <a href="https://github.com/kamal94/qr-code-generator" target="_blank" rel="noopener noreferrer">
-          <FaGithub /> View on GitHub
+      <div className="fixed bottom-0 left-0 right-0 w-full bg-gradient-to-br from-[#24292e] to-[#1a1e22] shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-[100]">
+        <a 
+          href="https://github.com/kamal94/qr-code-generator" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-white p-1.5 no-underline flex items-center justify-center gap-2.5 transition-all duration-300 font-medium text-[15px] hover:bg-white/10"
+        >
+          <FaGithub className="text-[22px]" /> View on GitHub
         </a>
       </div>
     </>
