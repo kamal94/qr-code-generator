@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaGithub, FaCopy, FaDownload, FaUpload, FaFileImport, FaFileExport, FaCheck, FaTimes } from 'react-icons/fa';
 import QRCodeStyling from 'qr-code-styling';
 import { createQRCanvas, downloadCanvas } from './qrCanvas';
-import './styles.css';
 
 const App: React.FC = () => {
   const [url, setUrl] = useState('https://example.com');
@@ -268,87 +267,94 @@ const App: React.FC = () => {
 
   return (
     <>
-      <div className="container">
-        <div className="settings-panel">
-          <h1>QR Code Generator</h1>
-          <div className="input-group">
-            <label htmlFor="url">Target URL</label>
+      <div className="flex flex-wrap gap-10 p-5 pb-20 max-w-[1200px] w-full justify-center">
+        <div className="bg-white rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] p-[30px] flex flex-col gap-[25px] w-full max-w-[400px]">
+          <h1 className="text-2xl font-semibold text-[#333] m-0 mb-2.5 text-center">QR Code Generator</h1>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="url" className="font-medium text-[#555]">Target URL</label>
             <input
               type="text"
               id="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
             />
           </div>
-          <div className="color-inputs">
-            <div className="input-group">
-              <label htmlFor="bg-color">Background Color</label>
+          <div className="flex gap-[15px]">
+            <div className="flex flex-col gap-2 flex-1">
+              <label htmlFor="bg-color" className="font-medium text-[#555]">Background Color</label>
               <input
                 type="color"
                 id="bg-color"
                 value={bgColor}
                 onChange={(e) => setBgColor(e.target.value)}
+                className="w-full h-10 p-[5px] border border-[#ccc] rounded text-base box-border"
               />
             </div>
-            <div className="input-group">
-              <label htmlFor="dot-color">Dot Color</label>
+            <div className="flex flex-col gap-2 flex-1">
+              <label htmlFor="dot-color" className="font-medium text-[#555]">Dot Color</label>
               <input
                 type="color"
                 id="dot-color"
                 value={dotColor}
                 onChange={(e) => setDotColor(e.target.value)}
+                className="w-full h-10 p-[5px] border border-[#ccc] rounded text-base box-border"
               />
             </div>
           </div>
-          <div className="input-group">
-            <label htmlFor="dot-style">Dot Shape</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="dot-style" className="font-medium text-[#555]">Dot Shape</label>
             <select
               id="dot-style"
               value={dotStyle}
               onChange={(e) => setDotStyle(e.target.value as 'square' | 'dots' | 'rounded')}
+              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
             >
               <option value="square">Square</option>
               <option value="dots">Circle</option>
               <option value="rounded">Rounded</option>
             </select>
           </div>
-          <div className="input-group">
-            <label htmlFor="corner-style">Border Corner Shape</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="corner-style" className="font-medium text-[#555]">Border Corner Shape</label>
             <select
               id="corner-style"
               value={cornerSquareStyle}
               onChange={(e) => setCornerSquareStyle(e.target.value as 'square' | 'extra-rounded' | 'dot')}
+              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
             >
               <option value="square">Square</option>
               <option value="extra-rounded">Rounded</option>
               <option value="dot">Circle</option>
             </select>
           </div>
-          <div className="input-group">
-            <label htmlFor="corner-dot-style">Corner Dot Shape</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="corner-dot-style" className="font-medium text-[#555]">Corner Dot Shape</label>
             <select
               id="corner-dot-style"
               value={cornerDotStyle}
               onChange={(e) => setCornerDotStyle(e.target.value as 'square' | 'dot')}
+              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
             >
               <option value="square">Square</option>
               <option value="dot">Dot</option>
             </select>
           </div>
-          <div className="input-group">
-            <label htmlFor="background-border-style">Background Border Style</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="background-border-style" className="font-medium text-[#555]">Background Border Style</label>
             <select
               id="background-border-style"
               value={backgroundBorderStyle}
               onChange={(e) => setBackgroundBorderStyle(e.target.value)}
+              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
             >
               <option value="square">Square</option>
               <option value="rounded">Rounded</option>
             </select>
           </div>
 
-          <div className="input-group">
-            <label htmlFor="border-width">Border Line Thickness</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="border-width" className="font-medium text-[#555]">Border Line Thickness</label>
             <input
               type="range"
               id="border-width"
@@ -356,12 +362,13 @@ const App: React.FC = () => {
               max="20"
               value={borderWidth}
               onChange={(e) => setBorderWidth(parseInt(e.target.value, 10))}
+              className="w-full"
             />
           </div>
 
           {backgroundBorderStyle === 'rounded' && (
-            <div className="input-group">
-              <label htmlFor="border-radius">Border Radius</label>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="border-radius" className="font-medium text-[#555]">Border Radius</label>
               <input
                 type="range"
                 id="border-radius"
@@ -369,11 +376,12 @@ const App: React.FC = () => {
                 max="50"
                 value={borderRadius}
                 onChange={(e) => setBorderRadius(parseInt(e.target.value, 10))}
+                className="w-full"
               />
             </div>
           )}
-          <div className="input-group">
-            <label htmlFor="margin">Border Padding</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="margin" className="font-medium text-[#555]">Border Padding</label>
             <input
               type="range"
               id="margin"
@@ -381,24 +389,25 @@ const App: React.FC = () => {
               max="50"
               value={qrMargin}
               onChange={(e) => setQrMargin(parseInt(e.target.value, 10))}
+              className="w-full"
             />
           </div>
-          <div className="input-group">
-            <label>Center Image</label>
-            <div className="image-controls">
-              <div className="file-input-wrapper">
-                <div className="file-input-button">Upload  Center Image</div>
-                <input type="file" accept="image/*" onChange={onFileChange} ref={fileInputRef} />
+          <div className="flex flex-col gap-2">
+            <label className="font-medium text-[#555]">Center Image</label>
+            <div className="flex flex-col gap-2.5">
+              <div className="relative overflow-hidden inline-block w-full cursor-pointer">
+                <div className="bg-[#007bff] text-white border-none rounded p-2.5 text-center cursor-pointer font-medium transition-colors duration-300 hover:bg-[#0056b3]">Upload  Center Image</div>
+                <input type="file" accept="image/*" onChange={onFileChange} ref={fileInputRef} className="absolute left-0 top-0 opacity-0 w-full h-full cursor-pointer" />
               </div>
               {centerImage && (
-                <button className="remove-image-button" onClick={onRemoveImageClick}>
+                <button className="bg-[#f8f9fa] text-[#dc3545] border border-[#dc3545] rounded p-2.5 text-base font-medium cursor-pointer transition-all duration-200 ease-in-out hover:bg-[#dc3545] hover:text-white" onClick={onRemoveImageClick}>
                   Remove Image
                 </button>
               )}
             </div>
           </div>
         </div>
-        <div className="qr-code-panel">
+        <div className="bg-white rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] p-[30px] flex flex-col items-center justify-center gap-5 w-full max-w-[400px]">
           <div
             ref={qrCodeContainerRef}
             style={{
@@ -411,35 +420,36 @@ const App: React.FC = () => {
           >
             <div ref={qrCodeRef}></div>
           </div>
-          <div className="input-group">
-            <label htmlFor="download-size">Download Resolution</label>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="download-size" className="font-medium text-[#555]">Download Resolution</label>
             <select
               id="download-size"
               value={downloadSize}
               onChange={(e) => setDownloadSize(parseInt(e.target.value, 10))}
+              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
             >
               <option value="512">512x512</option>
               <option value="1024">1024x1024</option>
               <option value="2048">2048x2048</option>
             </select>
           </div>
-          <button className="download-button" onClick={onDownloadClick}>
+          <button className="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white border-none rounded-lg py-3.5 px-5 text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out w-full flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(79,172,254,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(79,172,254,0.4)] active:translate-y-0" onClick={onDownloadClick}>
             <FaDownload /> Download QR Code
           </button>
           
-          <div className="config-manager">
-            <div className="config-header">
-              <h3>Configuration Manager</h3>
+          <div className="mt-20 w-full bg-[#f8f9fa] rounded-xl overflow-hidden border border-[#e9ecef]">
+            <div className="px-5 py-4 bg-gradient-to-br from-[#667eea] to-[#764ba2] border-b border-white/10">
+              <h3 className="m-0 text-base font-semibold text-white text-center">Configuration Manager</h3>
             </div>
-            <div className="config-tabs">
+            <div className="flex bg-[#e9ecef] border-b-2 border-[#dee2e6]">
               <button 
-                className={`config-tab ${configTab === 'export' ? 'active' : ''}`}
+                className={`flex-1 py-3 px-4 bg-transparent border-none border-b-[3px] border-b-transparent text-sm font-medium cursor-pointer transition-all duration-200 ease-in-out flex items-center justify-center gap-2 hover:bg-white/50 hover:text-[#495057] ${configTab === 'export' ? 'bg-white text-[#667eea] !border-b-[#667eea]' : 'text-[#6c757d]'}`}
                 onClick={() => setConfigTab('export')}
               >
                 <FaFileExport /> Export
               </button>
               <button 
-                className={`config-tab ${configTab === 'import' ? 'active' : ''}`}
+                className={`flex-1 py-3 px-4 bg-transparent border-none border-b-[3px] border-b-transparent text-sm font-medium cursor-pointer transition-all duration-200 ease-in-out flex items-center justify-center gap-2 hover:bg-white/50 hover:text-[#495057] ${configTab === 'import' ? 'bg-white text-[#667eea] !border-b-[#667eea]' : 'text-[#6c757d]'}`}
                 onClick={() => setConfigTab('import')}
               >
                 <FaFileImport /> Import
@@ -447,13 +457,13 @@ const App: React.FC = () => {
             </div>
             
             {configTab === 'export' && (
-              <div className="config-content">
-                <p className="config-description">Save or copy your current QR code settings</p>
-                <div className="config-actions">
-                  <button className="config-action-button" onClick={onCopyConfigClick}>
+              <div className="p-5 bg-white">
+                <p className="m-0 mb-4 text-[13px] text-[#6c757d] text-center">Save or copy your current QR code settings</p>
+                <div className="flex flex-col gap-2.5">
+                  <button className="bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg py-3 px-4 text-sm font-medium cursor-pointer transition-all duration-300 ease-in-out flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(102,126,234,0.25)] hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-[0_4px_12px_rgba(102,126,234,0.35)] active:not-disabled:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed" onClick={onCopyConfigClick}>
                     <FaCopy /> Copy to Clipboard
                   </button>
-                  <button className="config-action-button" onClick={onSaveConfigClick}>
+                  <button className="bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg py-3 px-4 text-sm font-medium cursor-pointer transition-all duration-300 ease-in-out flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(102,126,234,0.25)] hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-[0_4px_12px_rgba(102,126,234,0.35)] active:not-disabled:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed" onClick={onSaveConfigClick}>
                     <FaDownload /> Download File
                   </button>
                 </div>
@@ -461,21 +471,21 @@ const App: React.FC = () => {
             )}
             
             {configTab === 'import' && (
-              <div className="config-content">
-                <p className="config-description">Restore settings from a saved configuration</p>
+              <div className="p-5 bg-white">
+                <p className="m-0 mb-4 text-[13px] text-[#6c757d] text-center">Restore settings from a saved configuration</p>
                 
                 <div 
-                  className={`drop-zone ${isDragging ? 'dragging' : ''}`}
+                  className={`border-2 ${isDragging ? 'border-solid border-[#667eea] bg-gradient-to-br from-[rgba(102,126,234,0.1)] to-[rgba(118,75,162,0.1)] scale-[1.02]' : 'border-dashed border-[#cbd5e0] bg-[#f8f9fa] hover:border-[#667eea] hover:bg-[#f0f4ff]'} rounded-xl py-10 px-5 text-center cursor-pointer transition-all duration-300 ease-in-out`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   onClick={() => configFileInputRef.current?.click()}
                 >
-                  <FaUpload className="drop-zone-icon" />
-                  <p className="drop-zone-text">
+                  <FaUpload className="text-[32px] text-[#667eea] mb-3" />
+                  <p className="m-0 mb-1 text-sm font-medium text-[#495057]">
                     {isDragging ? 'Drop file here' : 'Drag & drop or click to upload'}
                   </p>
-                  <p className="drop-zone-subtext">JSON files only</p>
+                  <p className="m-0 text-xs text-[#6c757d]">JSON files only</p>
                   <input 
                     type="file" 
                     ref={configFileInputRef}
@@ -485,19 +495,19 @@ const App: React.FC = () => {
                   />
                 </div>
                 
-                <div className="divider">
-                  <span>OR</span>
+                <div className="flex items-center text-center my-5 text-[#adb5bd] text-xs font-medium before:content-[''] before:flex-1 before:border-b before:border-[#dee2e6] after:content-[''] after:flex-1 after:border-b after:border-[#dee2e6]">
+                  <span className="px-3">OR</span>
                 </div>
                 
-                <div className="paste-section">
+                <div className="flex flex-col gap-3">
                   <textarea
-                    className="config-textarea"
+                    className="w-full min-h-[120px] font-mono text-xs border-2 border-[#e9ecef] rounded-lg p-3 resize-y text-[#495057] bg-[#f8f9fa] transition-all duration-200 ease-in-out box-border focus:outline-none focus:border-[#667eea] focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] placeholder:text-[#adb5bd]"
                     placeholder="Paste JSON configuration here..."
                     value={configPaste}
                     onChange={(e) => setConfigPaste(e.target.value)}
                   />
                   <button 
-                    className="config-action-button"
+                    className="bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg py-3 px-4 text-sm font-medium cursor-pointer transition-all duration-300 ease-in-out flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(102,126,234,0.25)] hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-[0_4px_12px_rgba(102,126,234,0.35)] active:not-disabled:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={onApplyPastedConfig}
                     disabled={!configPaste.trim()}
                   >
@@ -511,8 +521,8 @@ const App: React.FC = () => {
       </div>
       
       {toast.type && (
-        <div className={`toast toast-${toast.type}`}>
-          {toast.type === 'success' ? <FaCheck /> : <FaTimes />}
+        <div className={`fixed bottom-[30px] right-[30px] bg-white px-5 py-4 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.15)] flex items-center gap-3 text-sm font-medium animate-[slideIn_0.3s_ease-out] z-[1000] max-w-[400px] max-md:bottom-5 max-md:right-5 max-md:left-5 max-md:max-w-none ${toast.type === 'success' ? 'border-l-4 border-l-[#28a745] text-[#155724]' : 'border-l-4 border-l-[#dc3545] text-[#721c24]'}`}>
+          {toast.type === 'success' ? <FaCheck className="text-[#28a745] text-lg" /> : <FaTimes className="text-[#dc3545] text-lg" />}
           <span>{toast.message}</span>
         </div>
       )}
