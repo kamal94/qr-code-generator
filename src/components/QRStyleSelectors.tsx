@@ -1,4 +1,9 @@
+import { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling';
 import React from 'react';
+
+// ========================================
+// Base Visual Option Selector Component
+// ========================================
 
 interface VisualOption<T> {
   value: T;
@@ -13,7 +18,7 @@ interface VisualOptionSelectorProps<T> {
   onChange: (value: T) => void;
 }
 
-export function VisualOptionSelector<T extends string>({ 
+function VisualOptionSelector<T extends string>({ 
   label, 
   options, 
   value, 
@@ -30,18 +35,17 @@ export function VisualOptionSelector<T extends string>({
             onClick={() => onChange(option.value)}
             className={`
               relative p-2 rounded-md border-2 transition-all duration-200
-              flex flex-col items-center gap-1 cursor-pointer
+              flex items-center justify-center cursor-pointer group
               ${value === option.value 
                 ? 'border-[#007bff] bg-[#e7f3ff] shadow-sm' 
                 : 'border-[#ddd] bg-white hover:border-[#999] hover:shadow-sm'
               }
             `}
-            title={option.label}
           >
             <div className="w-full h-8 flex items-center justify-center">
               {option.icon}
             </div>
-            <span className="text-[10px] text-[#555] text-center font-medium leading-tight">
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 delay-100 z-10">
               {option.label}
             </span>
           </button>
@@ -51,8 +55,12 @@ export function VisualOptionSelector<T extends string>({
   );
 }
 
+// ========================================
+// SVG Icons
+// ========================================
+
 // Dot Shape Icons
-export const DotShapeIcons = {
+const DotShapeIcons = {
   square: (
     <svg viewBox="0 0 60 60" className="w-full h-full">
       <rect x="10" y="10" width="10" height="10" fill="currentColor" />
@@ -134,7 +142,7 @@ export const DotShapeIcons = {
 };
 
 // Corner Square Shape Icons
-export const CornerSquareIcons = {
+const CornerSquareIcons = {
   square: (
     <svg viewBox="0 0 60 60" className="w-full h-full">
       <rect x="17.5" y="17.5" width="25" height="25" fill="none" stroke="currentColor" strokeWidth="3" />
@@ -156,7 +164,7 @@ export const CornerSquareIcons = {
 };
 
 // Corner Dot Shape Icons
-export const CornerDotIcons = {
+const CornerDotIcons = {
   square: (
     <svg viewBox="0 0 60 60" className="w-full h-full">
       <rect x="17.5" y="17.5" width="25" height="25" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
@@ -172,7 +180,7 @@ export const CornerDotIcons = {
 };
 
 // Background Border Style Icons
-export const BorderStyleIcons = {
+const BorderStyleIcons = {
   square: (
     <svg viewBox="0 0 60 60" className="w-full h-full">
       <rect x="5" y="5" width="50" height="50" fill="none" stroke="currentColor" strokeWidth="3" />
@@ -190,3 +198,93 @@ export const BorderStyleIcons = {
     </svg>
   ),
 };
+
+// ========================================
+// Type Definitions
+// ========================================
+
+// ========================================
+// Specialized Selector Components
+// ========================================
+
+interface DotShapeSelectorProps {
+  value: DotType;
+  onChange: (value: DotType) => void;
+}
+
+export const DotShapeSelector: React.FC<DotShapeSelectorProps> = ({ value, onChange }) => (
+  <VisualOptionSelector
+    label="Dot Shape"
+    options={[
+      { value: 'square', label: 'Square', icon: DotShapeIcons.square },
+      { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
+      { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
+      { value: 'extra-rounded', label: 'Extra Rounded', icon: DotShapeIcons['extra-rounded'] },
+      { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
+      { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
+    ]}
+    value={value}
+    onChange={(val) => onChange(val as DotType)}
+  />
+);
+
+interface CornerSquareSelectorProps {
+  value: CornerSquareType;
+  onChange: (value: CornerSquareType) => void;
+}
+
+export const CornerSquareSelector: React.FC<CornerSquareSelectorProps> = ({ value, onChange }) => (
+  <VisualOptionSelector
+    label="Border Corner Shape"
+    options={[
+      { value: 'square', label: 'Square', icon: CornerSquareIcons.square },
+      { value: 'extra-rounded', label: 'Extra Rounded', icon: CornerSquareIcons['extra-rounded'] },
+      { value: 'dot', label: 'Dot', icon: CornerSquareIcons.dot },
+      { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
+      { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
+      { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
+      { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
+    ]}
+    value={value}
+    onChange={(val) => onChange(val as CornerSquareType)}
+  />
+);
+
+interface CornerDotSelectorProps {
+  value: CornerDotType;
+  onChange: (value: CornerDotType) => void;
+}
+
+export const CornerDotSelector: React.FC<CornerDotSelectorProps> = ({ value, onChange }) => (
+  <VisualOptionSelector
+    label="Corner Dot Shape"
+    options={[
+      { value: 'square', label: 'Square', icon: CornerDotIcons.square },
+      { value: 'dot', label: 'Dot', icon: CornerDotIcons.dot },
+      { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
+      { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
+      { value: 'extra-rounded', label: 'Extra Rounded', icon: DotShapeIcons['extra-rounded'] },
+      { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
+      { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
+    ]}
+    value={value}
+    onChange={(val) => onChange(val as CornerDotType)}
+  />
+);
+
+interface BackgroundBorderStyleSelectorProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+export const BackgroundBorderStyleSelector: React.FC<BackgroundBorderStyleSelectorProps> = ({ value, onChange }) => (
+  <VisualOptionSelector
+    label="Background Border Style"
+    options={[
+      { value: 'square', label: 'Square', icon: BorderStyleIcons.square },
+      { value: 'rounded', label: 'Rounded', icon: BorderStyleIcons.rounded },
+    ]}
+    value={value}
+    onChange={(val) => onChange(val)}
+  />
+);

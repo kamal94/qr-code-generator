@@ -1,21 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaGithub, FaDownload, FaCheck, FaTimes } from 'react-icons/fa';
-import QRCodeStyling from 'qr-code-styling';
-import { createQRCanvas, downloadCanvas } from './qrCanvas';
-import { ConfigurationManager } from './ConfigurationManager';
+import QRCodeStyling, { CornerDotType, CornerSquareType, DotType } from 'qr-code-styling';
+import { createQRCanvas, downloadCanvas } from './helpers/qrCanvas';
+import { ConfigurationManager } from './components/ConfigurationManager';
 import { 
-  VisualOptionSelector, 
-  DotShapeIcons, 
-  CornerSquareIcons, 
-  CornerDotIcons, 
-  BorderStyleIcons 
-} from './VisualOptionSelector';
-
-
-// Type definitions matching qr-code-styling
-type DotType = 'dots' | 'rounded' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
-type CornerDotType = 'dot' | 'square' | DotType;
-type CornerSquareType = 'dot' | 'square' | 'extra-rounded' | DotType;
+  DotShapeSelector,
+  CornerSquareSelector,
+  CornerDotSelector,
+  BackgroundBorderStyleSelector
+} from './components/QRStyleSelectors';
 
 const App: React.FC = () => {
   const [url, setUrl] = useState('https://example.com');
@@ -217,56 +210,10 @@ const App: React.FC = () => {
               />
             </div>
           </div>
-          <VisualOptionSelector
-            label="Dot Shape"
-            options={[
-              { value: 'square', label: 'Square', icon: DotShapeIcons.square },
-              { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
-              { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
-              { value: 'extra-rounded', label: 'Extra Rounded', icon: DotShapeIcons['extra-rounded'] },
-              { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
-              { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
-            ]}
-            value={dotStyle}
-            onChange={(val) => setDotStyle(val as DotType)}
-          />
-          <VisualOptionSelector
-            label="Border Corner Shape"
-            options={[
-              { value: 'square', label: 'Square', icon: CornerSquareIcons.square },
-              { value: 'extra-rounded', label: 'Extra Rounded', icon: CornerSquareIcons['extra-rounded'] },
-              { value: 'dot', label: 'Dot', icon: CornerSquareIcons.dot },
-              { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
-              { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
-              { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
-              { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
-            ]}
-            value={cornerSquareStyle}
-            onChange={(val) => setCornerSquareStyle(val as CornerSquareType)}
-          />
-          <VisualOptionSelector
-            label="Corner Dot Shape"
-            options={[
-              { value: 'square', label: 'Square', icon: CornerDotIcons.square },
-              { value: 'dot', label: 'Dot', icon: CornerDotIcons.dot },
-              { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
-              { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
-              { value: 'extra-rounded', label: 'Extra Rounded', icon: DotShapeIcons['extra-rounded'] },
-              { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
-              { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
-            ]}
-            value={cornerDotStyle}
-            onChange={(val) => setCornerDotStyle(val as CornerDotType)}
-          />
-          <VisualOptionSelector
-            label="Background Border Style"
-            options={[
-              { value: 'square', label: 'Square', icon: BorderStyleIcons.square },
-              { value: 'rounded', label: 'Rounded', icon: BorderStyleIcons.rounded },
-            ]}
-            value={backgroundBorderStyle}
-            onChange={(val) => setBackgroundBorderStyle(val)}
-          />
+          <DotShapeSelector value={dotStyle} onChange={setDotStyle} />
+          <CornerSquareSelector value={cornerSquareStyle} onChange={setCornerSquareStyle} />
+          <CornerDotSelector value={cornerDotStyle} onChange={setCornerDotStyle} />
+          <BackgroundBorderStyleSelector value={backgroundBorderStyle} onChange={setBackgroundBorderStyle} />
 
           <div className="flex flex-col gap-2">
             <label htmlFor="border-width" className="font-medium text-[#555]">Border Line Thickness</label>
@@ -308,7 +255,7 @@ const App: React.FC = () => {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="font-medium text-[#555]">Center Image</label>
+            <label className="font-medium text-[#555]">QR Logo</label>
             <div className="flex flex-col gap-2.5">
               <div className="relative overflow-hidden inline-block w-full cursor-pointer">
                 <div className="bg-[#007bff] text-white border-none rounded p-2.5 text-center cursor-pointer font-medium transition-colors duration-300 hover:bg-[#0056b3]">Upload  Center Image</div>
