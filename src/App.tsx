@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaGithub, FaCopy, FaDownload, FaUpload, FaFileImport, FaFileExport, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaGithub, FaDownload, FaCheck, FaTimes } from 'react-icons/fa';
 import QRCodeStyling from 'qr-code-styling';
 import { createQRCanvas, downloadCanvas } from './qrCanvas';
+import { ConfigurationManager } from './ConfigurationManager';
+
 
 const App: React.FC = () => {
   const [url, setUrl] = useState('https://example.com');
@@ -11,21 +13,16 @@ const App: React.FC = () => {
   const [cornerSquareStyle, setCornerSquareStyle] = useState<'square' | 'extra-rounded' | 'dot'>('extra-rounded');
   const [cornerDotStyle, setCornerDotStyle] = useState<'square' | 'dot'>('dot');
   const [centerImage, setCenterImage] = useState<string | null>(null);
-  const [qrMargin, setQrMargin] = useState(20);
-  const [downloadSize, setDownloadSize] = useState(1000);
+  const [qrMargin, setQrMargin] = useState(13);
   const [backgroundBorderStyle, setBackgroundBorderStyle] = useState('rounded');
-  const [borderRadius, setBorderRadius] = useState(20);
-  const [borderWidth, setBorderWidth] = useState(0);
-  const [configPaste, setConfigPaste] = useState('');
-  const [configTab, setConfigTab] = useState<'export' | 'import'>('export');
+  const [borderRadius, setBorderRadius] = useState(50);
+  const [borderWidth, setBorderWidth] = useState(13);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | null }>({ message: '', type: null });
-  const [isDragging, setIsDragging] = useState(false);
 
   const qrCodeRef = useRef<HTMLDivElement>(null);
   const qrCodeContainerRef = useRef<HTMLDivElement>(null);
   const qrCode = useRef<QRCodeStyling | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const configFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (qrCodeRef.current) {
@@ -116,7 +113,6 @@ const App: React.FC = () => {
     if (isOneOf(cfg.cornerDotStyle, ['square', 'dot'] as const)) setCornerDotStyle(cfg.cornerDotStyle);
     if (typeof cfg.centerImage === 'string' || cfg.centerImage === null) setCenterImage(cfg.centerImage);
     if (Number.isFinite(cfg.qrMargin)) setQrMargin(Math.max(0, Math.min(50, Number(cfg.qrMargin))));
-    if (Number.isFinite(cfg.downloadSize)) setDownloadSize(Number(cfg.downloadSize));
     if (typeof cfg.backgroundBorderStyle === 'string') setBackgroundBorderStyle(cfg.backgroundBorderStyle);
     if (Number.isFinite(cfg.borderRadius)) setBorderRadius(Math.max(0, Math.min(50, Number(cfg.borderRadius))));
     if (Number.isFinite(cfg.borderWidth)) setBorderWidth(Math.max(0, Math.min(20, Number(cfg.borderWidth))));
@@ -125,99 +121,6 @@ const App: React.FC = () => {
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
     setTimeout(() => setToast({ message: '', type: null }), 3000);
-  };
-
-  const onCopyConfigClick = async () => {
-    const json = JSON.stringify(getConfigObject(), null, 2);
-    try {
-      await navigator.clipboard.writeText(json);
-      showToast('Configuration copied to clipboard!', 'success');
-    } catch (e) {
-      const tempTextArea = document.createElement('textarea');
-      tempTextArea.value = json;
-      document.body.appendChild(tempTextArea);
-      tempTextArea.select();
-      try {
-        document.execCommand('copy');
-        showToast('Configuration copied to clipboard!', 'success');
-      } catch (err) {
-        showToast('Failed to copy configuration', 'error');
-      } finally {
-        document.body.removeChild(tempTextArea);
-      }
-    }
-  };
-
-  const onSaveConfigClick = () => {
-    const json = JSON.stringify(getConfigObject(), null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'qr-config.json';
-    link.click();
-    URL.revokeObjectURL(link.href);
-    showToast('Configuration saved successfully!', 'success');
-  };
-
-  const onApplyPastedConfig = () => {
-    try {
-      const parsed = JSON.parse(configPaste);
-      applyConfig(parsed);
-      setConfigPaste('');
-      showToast('Configuration applied successfully!', 'success');
-    } catch (e) {
-      showToast('Invalid JSON format. Please check your configuration.', 'error');
-    }
-  };
-
-  const onConfigFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result || ''));
-        applyConfig(parsed);
-        showToast(`Configuration loaded from ${file.name}`, 'success');
-      } catch (err) {
-        showToast('Failed to parse configuration file', 'error');
-      } finally {
-        e.currentTarget.value = '';
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    if (!file.name.endsWith('.json')) {
-      showToast('Please drop a JSON file', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result || ''));
-        applyConfig(parsed);
-        showToast(`Configuration loaded from ${file.name}`, 'success');
-      } catch (err) {
-        showToast('Failed to parse configuration file', 'error');
-      }
-    };
-    reader.readAsText(file);
   };
 
   const getConfigObject = () => ({
@@ -229,7 +132,6 @@ const App: React.FC = () => {
     cornerDotStyle,
     centerImage,
     qrMargin,
-    downloadSize,
     backgroundBorderStyle,
     borderRadius,
     borderWidth,
@@ -237,6 +139,7 @@ const App: React.FC = () => {
 
 
   const onDownloadClick = async () => {
+    const downloadSize = 2048;
     const tempQrCode = new QRCodeStyling({
       ...qrCode.current?._options,
       width: downloadSize,
@@ -407,116 +310,30 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] p-[30px] flex flex-col items-center justify-center gap-5 w-full max-w-[400px]">
-          <div
-            ref={qrCodeContainerRef}
-            style={{
-              backgroundColor: bgColor,
-              padding: `${qrMargin}px`,
-              display: 'inline-block',
-              borderRadius: backgroundBorderStyle === 'rounded' ? `${borderRadius}px` : '0',
-              border: `${borderWidth}px solid ${dotColor}`,
-            }}
-          >
-            <div ref={qrCodeRef}></div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="download-size" className="font-medium text-[#555]">Download Resolution</label>
-            <select
-              id="download-size"
-              value={downloadSize}
-              onChange={(e) => setDownloadSize(parseInt(e.target.value, 10))}
-              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
+        <div className="bg-white rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.1)] flex flex-col items-center w-full max-w-[400px] overflow-hidden relative">
+          <div className="p-[30px] flex flex-col items-center gap-5 w-full flex-1 justify-center">
+            <div
+              ref={qrCodeContainerRef}
+              style={{
+                backgroundColor: bgColor,
+                padding: `${qrMargin}px`,
+                display: 'inline-block',
+                borderRadius: backgroundBorderStyle === 'rounded' ? `${borderRadius}px` : '0',
+                border: `${borderWidth}px solid ${dotColor}`,
+              }}
             >
-              <option value="512">512x512</option>
-              <option value="1024">1024x1024</option>
-              <option value="2048">2048x2048</option>
-            </select>
+              <div ref={qrCodeRef}></div>
+            </div>
+            <button className="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white border-none rounded-lg py-3.5 px-5 text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out w-full flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(79,172,254,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(79,172,254,0.4)] active:translate-y-0" onClick={onDownloadClick}>
+              <FaDownload /> Download QR Code
+            </button>
           </div>
-          <button className="bg-gradient-to-r from-[#4facfe] to-[#00f2fe] text-white border-none rounded-lg py-3.5 px-5 text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out w-full flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(79,172,254,0.3)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(79,172,254,0.4)] active:translate-y-0" onClick={onDownloadClick}>
-            <FaDownload /> Download QR Code
-          </button>
           
-          <div className="mt-20 w-full bg-[#f8f9fa] rounded-xl overflow-hidden border border-[#e9ecef]">
-            <div className="px-5 py-4 bg-gradient-to-br from-[#667eea] to-[#764ba2] border-b border-white/10">
-              <h3 className="m-0 text-base font-semibold text-white text-center">Configuration Manager</h3>
-            </div>
-            <div className="flex bg-[#e9ecef] border-b-2 border-[#dee2e6]">
-              <button 
-                className={`flex-1 py-3 px-4 bg-transparent border-none border-b-[3px] border-b-transparent text-sm font-medium cursor-pointer transition-all duration-200 ease-in-out flex items-center justify-center gap-2 hover:bg-white/50 hover:text-[#495057] ${configTab === 'export' ? 'bg-white text-[#667eea] !border-b-[#667eea]' : 'text-[#6c757d]'}`}
-                onClick={() => setConfigTab('export')}
-              >
-                <FaFileExport /> Export
-              </button>
-              <button 
-                className={`flex-1 py-3 px-4 bg-transparent border-none border-b-[3px] border-b-transparent text-sm font-medium cursor-pointer transition-all duration-200 ease-in-out flex items-center justify-center gap-2 hover:bg-white/50 hover:text-[#495057] ${configTab === 'import' ? 'bg-white text-[#667eea] !border-b-[#667eea]' : 'text-[#6c757d]'}`}
-                onClick={() => setConfigTab('import')}
-              >
-                <FaFileImport /> Import
-              </button>
-            </div>
-            
-            {configTab === 'export' && (
-              <div className="p-5 bg-white">
-                <p className="m-0 mb-4 text-[13px] text-[#6c757d] text-center">Save or copy your current QR code settings</p>
-                <div className="flex flex-col gap-2.5">
-                  <button className="bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg py-3 px-4 text-sm font-medium cursor-pointer transition-all duration-300 ease-in-out flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(102,126,234,0.25)] hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-[0_4px_12px_rgba(102,126,234,0.35)] active:not-disabled:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed" onClick={onCopyConfigClick}>
-                    <FaCopy /> Copy to Clipboard
-                  </button>
-                  <button className="bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg py-3 px-4 text-sm font-medium cursor-pointer transition-all duration-300 ease-in-out flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(102,126,234,0.25)] hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-[0_4px_12px_rgba(102,126,234,0.35)] active:not-disabled:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed" onClick={onSaveConfigClick}>
-                    <FaDownload /> Download File
-                  </button>
-                </div>
-              </div>
-            )}
-            
-            {configTab === 'import' && (
-              <div className="p-5 bg-white">
-                <p className="m-0 mb-4 text-[13px] text-[#6c757d] text-center">Restore settings from a saved configuration</p>
-                
-                <div 
-                  className={`border-2 ${isDragging ? 'border-solid border-[#667eea] bg-gradient-to-br from-[rgba(102,126,234,0.1)] to-[rgba(118,75,162,0.1)] scale-[1.02]' : 'border-dashed border-[#cbd5e0] bg-[#f8f9fa] hover:border-[#667eea] hover:bg-[#f0f4ff]'} rounded-xl py-10 px-5 text-center cursor-pointer transition-all duration-300 ease-in-out`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => configFileInputRef.current?.click()}
-                >
-                  <FaUpload className="text-[32px] text-[#667eea] mb-3" />
-                  <p className="m-0 mb-1 text-sm font-medium text-[#495057]">
-                    {isDragging ? 'Drop file here' : 'Drag & drop or click to upload'}
-                  </p>
-                  <p className="m-0 text-xs text-[#6c757d]">JSON files only</p>
-                  <input 
-                    type="file" 
-                    ref={configFileInputRef}
-                    accept="application/json,.json" 
-                    onChange={onConfigFileChange}
-                    style={{ display: 'none' }}
-                  />
-                </div>
-                
-                <div className="flex items-center text-center my-5 text-[#adb5bd] text-xs font-medium before:content-[''] before:flex-1 before:border-b before:border-[#dee2e6] after:content-[''] after:flex-1 after:border-b after:border-[#dee2e6]">
-                  <span className="px-3">OR</span>
-                </div>
-                
-                <div className="flex flex-col gap-3">
-                  <textarea
-                    className="w-full min-h-[120px] font-mono text-xs border-2 border-[#e9ecef] rounded-lg p-3 resize-y text-[#495057] bg-[#f8f9fa] transition-all duration-200 ease-in-out box-border focus:outline-none focus:border-[#667eea] focus:bg-white focus:shadow-[0_0_0_3px_rgba(102,126,234,0.1)] placeholder:text-[#adb5bd]"
-                    placeholder="Paste JSON configuration here..."
-                    value={configPaste}
-                    onChange={(e) => setConfigPaste(e.target.value)}
-                  />
-                  <button 
-                    className="bg-gradient-to-br from-[#667eea] to-[#764ba2] text-white border-none rounded-lg py-3 px-4 text-sm font-medium cursor-pointer transition-all duration-300 ease-in-out flex items-center justify-center gap-2 shadow-[0_2px_8px_rgba(102,126,234,0.25)] hover:not-disabled:-translate-y-0.5 hover:not-disabled:shadow-[0_4px_12px_rgba(102,126,234,0.35)] active:not-disabled:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={onApplyPastedConfig}
-                    disabled={!configPaste.trim()}
-                  >
-                    <FaCheck /> Apply Configuration
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <ConfigurationManager
+            getConfigObject={getConfigObject}
+            applyConfig={applyConfig}
+            showToast={showToast}
+          />
         </div>
       </div>
       
