@@ -3,15 +3,27 @@ import { FaGithub, FaDownload, FaCheck, FaTimes } from 'react-icons/fa';
 import QRCodeStyling from 'qr-code-styling';
 import { createQRCanvas, downloadCanvas } from './qrCanvas';
 import { ConfigurationManager } from './ConfigurationManager';
+import { 
+  VisualOptionSelector, 
+  DotShapeIcons, 
+  CornerSquareIcons, 
+  CornerDotIcons, 
+  BorderStyleIcons 
+} from './VisualOptionSelector';
 
+
+// Type definitions matching qr-code-styling
+type DotType = 'dots' | 'rounded' | 'classy' | 'classy-rounded' | 'square' | 'extra-rounded';
+type CornerDotType = 'dot' | 'square' | DotType;
+type CornerSquareType = 'dot' | 'square' | 'extra-rounded' | DotType;
 
 const App: React.FC = () => {
   const [url, setUrl] = useState('https://example.com');
   const [bgColor, setBgColor] = useState('#f0f8ff');
   const [dotColor, setDotColor] = useState('#1a2a45');
-  const [dotStyle, setDotStyle] = useState<'square' | 'dots' | 'rounded'>('rounded');
-  const [cornerSquareStyle, setCornerSquareStyle] = useState<'square' | 'extra-rounded' | 'dot'>('extra-rounded');
-  const [cornerDotStyle, setCornerDotStyle] = useState<'square' | 'dot'>('dot');
+  const [dotStyle, setDotStyle] = useState<DotType>('rounded');
+  const [cornerSquareStyle, setCornerSquareStyle] = useState<CornerSquareType>('extra-rounded');
+  const [cornerDotStyle, setCornerDotStyle] = useState<CornerDotType>('dot');
   const [centerImage, setCenterImage] = useState<string | null>(null);
   const [qrMargin, setQrMargin] = useState(13);
   const [backgroundBorderStyle, setBackgroundBorderStyle] = useState('rounded');
@@ -108,9 +120,9 @@ const App: React.FC = () => {
     if (typeof cfg.url === 'string') setUrl(cfg.url);
     if (typeof cfg.bgColor === 'string') setBgColor(cfg.bgColor);
     if (typeof cfg.dotColor === 'string') setDotColor(cfg.dotColor);
-    if (isOneOf(cfg.dotStyle, ['square', 'dots', 'rounded'] as const)) setDotStyle(cfg.dotStyle);
-    if (isOneOf(cfg.cornerSquareStyle, ['square', 'extra-rounded', 'dot'] as const)) setCornerSquareStyle(cfg.cornerSquareStyle);
-    if (isOneOf(cfg.cornerDotStyle, ['square', 'dot'] as const)) setCornerDotStyle(cfg.cornerDotStyle);
+    if (isOneOf(cfg.dotStyle, ['square', 'dots', 'rounded', 'classy', 'classy-rounded', 'extra-rounded'] as const)) setDotStyle(cfg.dotStyle);
+    if (isOneOf(cfg.cornerSquareStyle, ['square', 'extra-rounded', 'dot', 'dots', 'rounded', 'classy', 'classy-rounded'] as const)) setCornerSquareStyle(cfg.cornerSquareStyle);
+    if (isOneOf(cfg.cornerDotStyle, ['square', 'dot', 'dots', 'rounded', 'classy', 'classy-rounded', 'extra-rounded'] as const)) setCornerDotStyle(cfg.cornerDotStyle);
     if (typeof cfg.centerImage === 'string' || cfg.centerImage === null) setCenterImage(cfg.centerImage);
     if (Number.isFinite(cfg.qrMargin)) setQrMargin(Math.max(0, Math.min(50, Number(cfg.qrMargin))));
     if (typeof cfg.backgroundBorderStyle === 'string') setBackgroundBorderStyle(cfg.backgroundBorderStyle);
@@ -205,56 +217,56 @@ const App: React.FC = () => {
               />
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="dot-style" className="font-medium text-[#555]">Dot Shape</label>
-            <select
-              id="dot-style"
-              value={dotStyle}
-              onChange={(e) => setDotStyle(e.target.value as 'square' | 'dots' | 'rounded')}
-              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
-            >
-              <option value="square">Square</option>
-              <option value="dots">Circle</option>
-              <option value="rounded">Rounded</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="corner-style" className="font-medium text-[#555]">Border Corner Shape</label>
-            <select
-              id="corner-style"
-              value={cornerSquareStyle}
-              onChange={(e) => setCornerSquareStyle(e.target.value as 'square' | 'extra-rounded' | 'dot')}
-              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
-            >
-              <option value="square">Square</option>
-              <option value="extra-rounded">Rounded</option>
-              <option value="dot">Circle</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="corner-dot-style" className="font-medium text-[#555]">Corner Dot Shape</label>
-            <select
-              id="corner-dot-style"
-              value={cornerDotStyle}
-              onChange={(e) => setCornerDotStyle(e.target.value as 'square' | 'dot')}
-              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
-            >
-              <option value="square">Square</option>
-              <option value="dot">Dot</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <label htmlFor="background-border-style" className="font-medium text-[#555]">Background Border Style</label>
-            <select
-              id="background-border-style"
-              value={backgroundBorderStyle}
-              onChange={(e) => setBackgroundBorderStyle(e.target.value)}
-              className="w-full p-2.5 border border-[#ccc] rounded text-base box-border"
-            >
-              <option value="square">Square</option>
-              <option value="rounded">Rounded</option>
-            </select>
-          </div>
+          <VisualOptionSelector
+            label="Dot Shape"
+            options={[
+              { value: 'square', label: 'Square', icon: DotShapeIcons.square },
+              { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
+              { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
+              { value: 'extra-rounded', label: 'Extra Rounded', icon: DotShapeIcons['extra-rounded'] },
+              { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
+              { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
+            ]}
+            value={dotStyle}
+            onChange={(val) => setDotStyle(val as DotType)}
+          />
+          <VisualOptionSelector
+            label="Border Corner Shape"
+            options={[
+              { value: 'square', label: 'Square', icon: CornerSquareIcons.square },
+              { value: 'extra-rounded', label: 'Extra Rounded', icon: CornerSquareIcons['extra-rounded'] },
+              { value: 'dot', label: 'Dot', icon: CornerSquareIcons.dot },
+              { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
+              { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
+              { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
+              { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
+            ]}
+            value={cornerSquareStyle}
+            onChange={(val) => setCornerSquareStyle(val as CornerSquareType)}
+          />
+          <VisualOptionSelector
+            label="Corner Dot Shape"
+            options={[
+              { value: 'square', label: 'Square', icon: CornerDotIcons.square },
+              { value: 'dot', label: 'Dot', icon: CornerDotIcons.dot },
+              { value: 'dots', label: 'Dots', icon: DotShapeIcons.dots },
+              { value: 'rounded', label: 'Rounded', icon: DotShapeIcons.rounded },
+              { value: 'extra-rounded', label: 'Extra Rounded', icon: DotShapeIcons['extra-rounded'] },
+              { value: 'classy', label: 'Classy', icon: DotShapeIcons.classy },
+              { value: 'classy-rounded', label: 'Classy Rounded', icon: DotShapeIcons['classy-rounded'] },
+            ]}
+            value={cornerDotStyle}
+            onChange={(val) => setCornerDotStyle(val as CornerDotType)}
+          />
+          <VisualOptionSelector
+            label="Background Border Style"
+            options={[
+              { value: 'square', label: 'Square', icon: BorderStyleIcons.square },
+              { value: 'rounded', label: 'Rounded', icon: BorderStyleIcons.rounded },
+            ]}
+            value={backgroundBorderStyle}
+            onChange={(val) => setBackgroundBorderStyle(val)}
+          />
 
           <div className="flex flex-col gap-2">
             <label htmlFor="border-width" className="font-medium text-[#555]">Border Line Thickness</label>
